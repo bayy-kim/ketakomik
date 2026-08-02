@@ -8,9 +8,15 @@ interface LetterBoxProps {
   letter?: string;
   state?: LetterState;
   delayIndex?: number;
+  wordLength?: number;
 }
 
-export function LetterBox({ letter = "", state = "EMPTY", delayIndex = 0 }: LetterBoxProps) {
+export function LetterBox({
+  letter = "",
+  state = "EMPTY",
+  delayIndex = 0,
+  wordLength = 5,
+}: LetterBoxProps) {
   const isRevealed = state === "CORRECT" || state === "PRESENT" || state === "ABSENT";
 
   let bgColor = "bg-white";
@@ -34,8 +40,16 @@ export function LetterBox({ letter = "", state = "EMPTY", delayIndex = 0 }: Lett
     borderColor = "border-comic-ink";
   }
 
+  // Adaptive size based on word length for universal mobile responsiveness (320px to 430px+)
+  let sizeClasses = "w-10 h-10 sm:w-13 sm:h-13 text-2xl sm:text-3xl";
+  if (wordLength >= 7) {
+    sizeClasses = "w-8 h-8 sm:w-11 sm:h-11 text-lg sm:text-2xl";
+  } else if (wordLength === 6) {
+    sizeClasses = "w-9 h-9 sm:w-12 sm:h-12 text-xl sm:text-2xl";
+  }
+
   return (
-    <div className="w-11 h-11 sm:w-14 sm:h-14 perspective-1000 select-none">
+    <div className={`${sizeClasses} perspective-1000 select-none shrink-0`}>
       <motion.div
         className="w-full h-full relative transform-style-3d transition-transform duration-500"
         initial={false}
@@ -44,14 +58,14 @@ export function LetterBox({ letter = "", state = "EMPTY", delayIndex = 0 }: Lett
       >
         {/* Front Face (Typing / Empty) */}
         <div
-          className={`absolute w-full h-full backface-hidden flex items-center justify-center border-[3px] ${borderColor} ${bgColor} rounded-md comic-shadow-sm font-bangers text-2xl sm:text-3xl text-comic-ink`}
+          className={`absolute w-full h-full backface-hidden flex items-center justify-center border-[2.5px] sm:border-[3px] ${borderColor} ${bgColor} rounded-md comic-shadow-sm font-bangers text-comic-ink`}
         >
           {letter}
         </div>
 
         {/* Back Face (Revealed with Feedback Color) */}
         <div
-          className={`absolute w-full h-full backface-hidden rotate-y-180 flex items-center justify-center border-[3px] border-comic-ink ${bgColor} rounded-md comic-shadow-sm font-bangers text-2xl sm:text-3xl ${textColor}`}
+          className={`absolute w-full h-full backface-hidden rotate-y-180 flex items-center justify-center border-[2.5px] sm:border-[3px] border-comic-ink ${bgColor} rounded-md comic-shadow-sm font-bangers ${textColor}`}
         >
           {letter}
         </div>

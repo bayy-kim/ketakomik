@@ -25,9 +25,9 @@ export function VirtualKeyboard({
   disabled = false,
 }: VirtualKeyboardProps) {
   return (
-    <div className="w-full max-w-lg mx-auto flex flex-col gap-1.5 p-2 bg-comic-paper comic-border rounded-lg comic-shadow">
+    <div className="w-full max-w-md sm:max-w-lg mx-auto flex flex-col gap-1 sm:gap-1.5 p-1.5 sm:p-2 bg-comic-paper comic-border rounded-lg comic-shadow touch-manipulation">
       {KEYBOARD_ROWS.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 touch-manipulation">
+        <div key={rowIndex} className="flex justify-center gap-0.5 sm:gap-1.5">
           {row.map((key) => {
             const status = letterStatuses[key];
 
@@ -49,6 +49,8 @@ export function VirtualKeyboard({
               btnBg = "bg-comic-yellow hover:bg-yellow-400 font-bold";
             }
 
+            const isSpecialKey = key === "ENTER" || key === "DELETE";
+
             return (
               <button
                 key={key}
@@ -58,15 +60,17 @@ export function VirtualKeyboard({
                   else if (key === "DELETE") onDelete();
                   else onChar(key);
                 }}
-                /* Technical Guardrail: minimum 44x44px touch target on mobile */
-                className={`min-w-[34px] min-h-[44px] sm:min-w-[44px] sm:min-h-[48px] px-1.5 py-2 font-bangers text-base sm:text-lg border-2 border-comic-ink rounded flex items-center justify-center select-none comic-shadow-sm transition-transform active:translate-y-0.5 disabled:opacity-50 ${btnBg} ${btnText}`}
+                /* Technical Guardrail: flex-1 for fluid universal 320px–430px+ mobile screens, min-h-[44px] touch target */
+                className={`${
+                  isSpecialKey ? "flex-[1.5] max-w-[62px] px-1" : "flex-1 max-w-[42px] px-0.5"
+                } min-h-[44px] sm:min-h-[48px] py-1.5 font-bangers text-base sm:text-lg border-2 border-comic-ink rounded flex items-center justify-center select-none comic-shadow-sm transition-transform active:translate-y-0.5 disabled:opacity-50 ${btnBg} ${btnText}`}
               >
                 {key === "ENTER" ? (
-                  <span className="flex items-center gap-0.5 text-xs sm:text-sm font-bold">
-                    CEK <CornerDownLeft className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-0.5 text-[11px] sm:text-sm font-bold leading-none">
+                    CEK <CornerDownLeft className="w-3 h-3 hidden sm:inline" />
                   </span>
                 ) : key === "DELETE" ? (
-                  <Delete className="w-5 h-5 text-comic-ink" />
+                  <Delete className="w-4 h-4 sm:w-5 sm:h-5 text-comic-ink" />
                 ) : (
                   key
                 )}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Flame, Droplet, Volume2, VolumeX, BookOpen, Swords, Trophy, Sparkles, User, ShieldAlert } from "lucide-react";
+import { Flame, Droplet, Volume2, VolumeX, BookOpen, Swords, Trophy, Sparkles, ShieldAlert } from "lucide-react";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
 
 interface HeaderProps {
@@ -35,94 +35,102 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
 
   return (
     <header className="w-full bg-white border-b-4 border-comic-ink shadow-[0_4px_0_#16161A] sticky top-0 z-40">
-      <div className="max-w-6xl mx-auto px-3 py-2.5 flex items-center justify-between">
-        {/* Logo Brand */}
-        <Link href="/" className="flex items-center gap-1.5 group">
-          <div className="bg-comic-yellow comic-border px-2 py-0.5 rounded rotate-[-2deg] group-hover:rotate-0 transition-transform shadow-[2px_2px_0_#16161A]">
-            <span className="font-bangers text-2xl sm:text-3xl text-comic-ink tracking-wider">TEKAKOMIK</span>
-          </div>
-        </Link>
+      <div className="max-w-6xl mx-auto px-2.5 sm:px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2">
+        {/* Top Tier on Mobile / Left on Desktop: Logo + Status Badges */}
+        <div className="w-full sm:w-auto flex items-center justify-between gap-2">
+          {/* Logo Brand */}
+          <Link href="/" className="flex items-center gap-1.5 shrink-0">
+            <div className="bg-comic-yellow comic-border px-2 py-0.5 rounded rotate-[-2deg] active:rotate-0 transition-transform comic-shadow-sm">
+              <span className="font-bangers text-2xl sm:text-3xl text-comic-ink tracking-wider">TEKAKOMIK</span>
+            </div>
+          </Link>
 
-        {/* Currency Tinta & Streak */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Streak Indicator */}
-          <div
-            className="flex items-center gap-1 bg-amber-100 comic-border-sm px-2 py-1 rounded shadow-[2px_2px_0_#16161A]"
-            title="Login berturut-turut (Streak)"
-          >
-            <Flame className="w-4 h-4 text-orange-600 fill-orange-500 animate-pulse" />
-            <span className="font-bangers text-base sm:text-lg text-comic-ink">{streak}</span>
-          </div>
+          {/* Currency Tinta & Streak */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Streak Indicator */}
+            <div
+              className="flex items-center gap-1 bg-amber-100 comic-border-sm px-2 py-1 rounded comic-shadow-sm text-xs sm:text-sm"
+              title="Login berturut-turut (Streak)"
+            >
+              <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600 fill-orange-500 animate-pulse" />
+              <span className="font-bangers text-base sm:text-lg text-comic-ink">{streak}</span>
+            </div>
 
-          {/* Tinta Currency */}
-          <div
-            className="flex items-center gap-1 bg-blue-100 comic-border-sm px-2 py-1 rounded shadow-[2px_2px_0_#16161A]"
-            title="Tinta Komik (Currency untuk Buka Clue)"
-          >
-            <Droplet className="w-4 h-4 text-comic-klu fill-comic-klu" />
-            <span className="font-bangers text-base sm:text-lg text-comic-ink">{tinta}</span>
-          </div>
+            {/* Tinta Currency */}
+            <div
+              className="flex items-center gap-1 bg-blue-100 comic-border-sm px-2 py-1 rounded comic-shadow-sm text-xs sm:text-sm"
+              title="Tinta Komik (Currency untuk Buka Clue)"
+            >
+              <Droplet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-comic-klu fill-comic-klu" />
+              <span className="font-bangers text-base sm:text-lg text-comic-ink">{tinta}</span>
+            </div>
 
-          {/* Hardcore Voice Mode Toggle */}
-          <button
-            onClick={handleToggleMode}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded font-bangers text-sm sm:text-base comic-border-sm transition-transform active:scale-95 shadow-[2px_2px_0_#16161A] ${
-              mode === "HARDCORE_VOICE"
-                ? "bg-comic-bayangan text-white animate-bounce"
-                : "bg-gray-100 text-comic-ink hover:bg-gray-200"
-            }`}
-            title={mode === "HARDCORE_VOICE" ? "Mode Dengar Aktif! Tap untuk kembalikan" : "Aktifkan Mode Dengar Suara (Hardcore)"}
-          >
-            {mode === "HARDCORE_VOICE" ? (
-              <>
-                <Volume2 className="w-4 h-4" />
-                <span className="hidden sm:inline">DENGAR</span>
-              </>
-            ) : (
-              <>
-                <VolumeX className="w-4 h-4 text-gray-500" />
-                <span className="hidden sm:inline">NORMAL</span>
-              </>
-            )}
-          </button>
+            {/* Hardcore Voice Mode Toggle */}
+            <button
+              onClick={handleToggleMode}
+              className={`flex items-center gap-1 px-2 py-1 rounded font-bangers text-xs sm:text-base comic-border-sm transition-transform active:scale-95 comic-shadow-sm ${
+                mode === "HARDCORE_VOICE"
+                  ? "bg-comic-bayangan text-white animate-bounce"
+                  : "bg-gray-100 text-comic-ink hover:bg-gray-200"
+              }`}
+              title={mode === "HARDCORE_VOICE" ? "Mode Dengar Aktif! Tap untuk kembalikan" : "Aktifkan Mode Dengar Suara (Hardcore)"}
+            >
+              {mode === "HARDCORE_VOICE" ? (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="inline">DENGAR</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500" />
+                  <span className="hidden sm:inline">NORMAL</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Quick Nav Links */}
-        <nav className="flex items-center gap-1.5 sm:gap-2">
+        {/* Quick Nav Links (Touch target min 44x44px for accessibility) */}
+        <nav className="w-full sm:w-auto flex items-center justify-around sm:justify-end gap-1 sm:gap-2 pt-1 sm:pt-0 border-t-2 sm:border-t-0 border-gray-200">
           <Link
             href="/chapter"
-            className="p-1.5 bg-white comic-border-sm rounded hover:bg-yellow-100 transition-colors shadow-[2px_2px_0_#16161A]"
+            className="flex-1 sm:flex-initial min-h-[38px] px-2.5 py-1 bg-white comic-border-sm rounded hover:bg-yellow-100 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-comic-ink"
             title="Story Chapters"
           >
-            <BookOpen className="w-4 h-4 text-comic-ink" />
+            <BookOpen className="w-3.5 h-3.5 text-comic-ink" />
+            <span className="sm:hidden">CHAPTER</span>
           </Link>
           <Link
             href="/duel"
-            className="p-1.5 bg-white comic-border-sm rounded hover:bg-magenta-100 transition-colors shadow-[2px_2px_0_#16161A]"
+            className="flex-1 sm:flex-initial min-h-[38px] px-2.5 py-1 bg-white comic-border-sm rounded hover:bg-pink-100 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-comic-bayangan"
             title="Mode Duel"
           >
-            <Swords className="w-4 h-4 text-comic-bayangan" />
+            <Swords className="w-3.5 h-3.5 text-comic-bayangan" />
+            <span className="sm:hidden">DUEL</span>
           </Link>
           <Link
             href="/leaderboard"
-            className="p-1.5 bg-white comic-border-sm rounded hover:bg-blue-100 transition-colors shadow-[2px_2px_0_#16161A]"
+            className="flex-1 sm:flex-initial min-h-[38px] px-2.5 py-1 bg-white comic-border-sm rounded hover:bg-blue-100 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-comic-klu"
             title="Papan Peringkat"
           >
-            <Trophy className="w-4 h-4 text-comic-klu" />
+            <Trophy className="w-3.5 h-3.5 text-comic-klu" />
+            <span className="sm:hidden">RANK</span>
           </Link>
           <Link
             href="/usul"
-            className="p-1.5 bg-white comic-border-sm rounded hover:bg-green-100 transition-colors shadow-[2px_2px_0_#16161A]"
+            className="flex-1 sm:flex-initial min-h-[38px] px-2.5 py-1 bg-white comic-border-sm rounded hover:bg-green-100 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-emerald-700"
             title="Usulkan Kata"
           >
-            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="sm:hidden">USUL</span>
           </Link>
           <Link
             href="/admin"
-            className="p-1.5 bg-gray-200 comic-border-sm rounded hover:bg-gray-300 transition-colors shadow-[2px_2px_0_#16161A]"
+            className="flex-1 sm:flex-initial min-h-[38px] px-2.5 py-1 bg-gray-200 comic-border-sm rounded hover:bg-gray-300 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-comic-ink"
             title="Admin Panel"
           >
-            <ShieldAlert className="w-4 h-4 text-comic-ink" />
+            <ShieldAlert className="w-3.5 h-3.5 text-comic-ink" />
+            <span className="sm:hidden">ADMIN</span>
           </Link>
         </nav>
       </div>
