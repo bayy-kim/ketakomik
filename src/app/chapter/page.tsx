@@ -1,0 +1,179 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Header } from "@/components/Header";
+import { BookOpen, CheckCircle, Lock, Trophy, Sparkles, ArrowRight } from "lucide-react";
+import Link from "next/link";
+
+interface WordItem {
+  id: string;
+  scheduledDate: string;
+  difficulty: string;
+  category: string;
+}
+
+interface ChapterItem {
+  id: string;
+  title: string;
+  chapterNote: string;
+  unlockComicImageUrl: string;
+  totalWords: number;
+  words: WordItem[];
+}
+
+export default function ChapterPage() {
+  const [chapters, setChapters] = useState<ChapterItem[]>([]);
+  const [completedWordIds, setCompletedWordIds] = useState<string[]>(["w1", "w2"]); // Mock solved
+  const [selectedUnlockComic, setSelectedUnlockComic] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadChapters() {
+      try {
+        const res = await fetch("/api/chapters");
+        const data = await res.json();
+        if (data.chapters) {
+          setChapters(data.chapters);
+        }
+      } catch (e) {
+        console.error("Gagal memuat chapter:", e);
+      }
+    }
+    loadChapters();
+  }, []);
+
+  return (
+    <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
+      <Header />
+
+      <main className="flex-1 max-w-4xl mx-auto w-full px-3 py-6">
+        {/* Title Header */}
+        <div className="bg-comic-yellow comic-border p-4 rounded-xl comic-shadow rotate-[-1deg] mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-8 h-8 text-comic-ink" />
+            <div>
+              <h1 className="font-bangers text-3xl sm:text-4xl text-comic-ink">CHAPTER STORY MINGGUAN</h1>
+              <p className="text-xs sm:text-sm font-sans text-comic-ink">
+                Selesaikan 5 kata dalam 1 Chapter untuk membuka Panel Komik Rahasia!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Chapter List */}
+        <div className="flex flex-col gap-6">
+          {chapters.map((chapter) => {
+            const completedCount = chapter.words.filter((w) => completedWordIds.includes(w.id)).length;
+            const progressPercent = Math.round((completedCount / (chapter.totalWords || 5)) * 100);
+            const isAllCompleted = completedCount >= (chapter.totalWords || 5);
+
+            return (
+              <div key={chapter.id} className="bg-white comic-border p-5 rounded-xl comic-shadow flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="bg-comic-klu text-white font-bangers text-sm px-2.5 py-0.5 rounded comic-border-sm">
+                      CHAPTER SPESIAL
+                    </span>
+                    <h2 className="font-bangers text-2xl sm:text-3xl text-comic-ink mt-1">{chapter.title}</h2>
+                    <p className="text-xs sm:text-sm text-gray-700 font-sans italic mt-0.5">
+                      &ldquo;{chapter.chapterNote}&rdquo;
+                    </p>
+                  </div>
+
+                  {isAllCompleted ? (
+                    <button
+                      onClick={() => setSelectedUnlockComic(chapter.unlockComicImageUrl)}
+                      className="comic-btn text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
+                    >
+                      <Sparkles className="w-4 h-4" /> Buka Komik
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1 bg-gray-100 comic-border-sm px-2.5 py-1 rounded text-xs font-bangers text-gray-600">
+                      <Lock className="w-3.5 h-3.5" /> Terkunci
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress Bar Bergaya Komik */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex justify-between text-xs font-bangers text-comic-ink">
+                    <span>PROGRESS PENCARIAN KATA</span>
+                    <span>
+                      {completedCount} / {chapter.totalWords || 5} KATA ({progressPercent}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-5 bg-gray-200 comic-border-sm rounded-full overflow-hidden p-0.5">
+                    <div
+                      className="h-full bg-comic-yellow comic-border-sm rounded-full transition-all duration-500"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Words Grid inside Chapter */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
+                  {chapter.words.map((word, idx) => {
+                    const isSolved = completedWordIds.includes(word.id);
+
+                    return (
+                      <div
+                        key={word.id}
+                        className={`comic-border p-2.5 rounded-lg flex flex-col items-center justify-center gap-1 ${
+                          isSolved ? "bg-green-100" : "bg-gray-50"
+                        }`}
+                      >
+                        <span className="font-bangers text-sm text-comic-ink">KATA #{idx + 1}</span>
+                        <span className="text-[10px] text-gray-500 font-sans">{word.category}</span>
+                        {isSolved ? (
+                          <CheckCircle className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <Link
+                            href={`/?wordId=${word.id}`}
+                            className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5"
+                          >
+                            Mainkan <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </main>
+
+      {/* Modal Reveal Panel Komik Cerita Original */}
+      {selectedUnlockComic && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-comic-paper comic-border p-5 rounded-2xl comic-shadow-lg max-w-2xl w-full flex flex-col items-center gap-4 relative animate-in fade-in zoom-in">
+            <div className="bg-comic-yellow comic-border px-4 py-1.5 rounded rotate-[-2deg]">
+              <span className="font-bangers text-2xl sm:text-3xl text-comic-ink">
+                🎉 PANEL KOMIK TERBUKA! 🎉
+              </span>
+            </div>
+
+            <div className="w-full max-h-[60dvh] overflow-hidden comic-border rounded-xl">
+              <img
+                src={selectedUnlockComic}
+                alt="Comic Story Panel"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+
+            <p className="text-xs sm:text-sm text-center font-sans text-gray-800 italic">
+              Kapten Klu menemukan lokasi rahasia markas Bayangan! Cerita akan berlanjut di Chapter minggu depan.
+            </p>
+
+            <button
+              onClick={() => setSelectedUnlockComic(null)}
+              className="comic-btn bg-comic-klu text-white hover:bg-blue-600"
+            >
+              Tutup Komik
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

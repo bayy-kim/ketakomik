@@ -1,0 +1,307 @@
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import { Header } from "@/components/Header";
+import { GameBoard } from "@/components/GameBoard";
+import { VirtualKeyboard } from "@/components/VirtualKeyboard";
+import { ClueDualPanel } from "@/components/ClueDualPanel";
+import { ResultShareCard } from "@/components/ResultShareCard";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { LetterState } from "@/components/LetterBox";
+import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
+
+function GameContainer() {
+  const [wordId, setWordId] = useState<string>("w1");
+  const [wordLength, setWordLength] = useState<number>(5);
+  const [category, setCategory] = useState<string>("Misteri");
+  const [difficulty, setDifficulty] = useState<string>("MEDIUM");
+  
+  const [guesses, setGuesses] = useState<string[]>([]);
+  const [feedbacks, setFeedbacks] = useState<LetterState[][]>([]);
+  const [currentGuess, setCurrentGuess] = useState<string>("");
+  const [isShaking, setIsShaking] = useState(false);
+  
+  const [isWon, setIsWon] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [targetWord, setTargetWord] = useState<string>("");
+  const [tintaEarned, setTintaEarned] = useState<number>(0);
+  
+  const [tintaCount, setTintaCount] = useState<number>(50);
+  const [streakCount, setStreakCount] = useState<number>(0);
+  const [mode, setMode] = useState<"NORMAL" | "HARDCORE_VOICE">("NORMAL");
+  const [loading, setLoading] = useState(false);
+  const [feedbackBurst, setFeedbackBurst] = useState<string | null>(null);
+
+  // Initialize word and local storage state
+  useEffect(() => {
+    const state = getLocalGameState();
+    setTintaCount(state.tinta);
+    setStreakCount(state.streak);
+    setMode(state.mode);
+
+    async function initTodayWord() {
+      try {
+        const res = await fetch("/api/game/today");
+        const data = await res.json();
+        if (data.id) {
+          setWordId(data.id);
+          setWordLength(data.length || 5);
+          setCategory(data.category || "Umum");
+          setDifficulty(data.difficulty || "MEDIUM");
+
+          // Restore guesses if played today
+          const history = state.guessesHistory[data.id];
+          if (history) {
+            // Already played today
+          }
+        }
+      } catch (e) {
+        console.error("Gagal memuat kata hari ini:", e);
+      }
+    }
+
+    initTodayWord();
+  }, []);
+
+  const handleChar = (char: string) => {
+    if (isGameOver || loading) return;
+    if (currentGuess.length < wordLength) {
+      setCurrentGuess((prev) => prev + char);
+    }
+  };
+
+  const handleDelete = () => {
+    if (isGameOver || loading) return;
+    setCurrentGuess((prev) => prev.slice(0, -1));
+  };
+
+  const handleEnter = async () => {
+    if (isGameOver || loading) return;
+    if (currentGuess.length !== wordLength) {
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const state = getLocalGameState();
+      const res = await fetch("/api/game/guess", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wordId,
+          guess: currentGuess,
+          attemptNumber: guesses.length + 1,
+          anonId: state.anonId,
+          mode,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Tebakan tidak valid");
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
+        return;
+      }
+
+      const newGuesses = [...guesses, currentGuess];
+      const newFeedbacks = [...feedbacks, data.feedback];
+
+      setGuesses(newGuesses);
+      setFeedbacks(newFeedbacks);
+      setCurrentGuess("");
+
+      // Burst feedback text trigger
+      if (data.isWon) {
+        setFeedbackBurst("TEPAT!");
+        setIsWon(true);
+        setIsGameOver(true);
+        setTintaEarned(data.tintaEarned || 30);
+        setTargetWord(data.targetWord || currentGuess);
+
+        const newTinta = tintaCount + (data.tintaEarned || 30);
+        const newStreak = streakCount + 1;
+        setTintaCount(newTinta);
+        setStreakCount(newStreak);
+        saveLocalGameState({ tinta: newTinta, streak: newStreak });
+      } else if (data.isGameOver) {
+        setFeedbackBurst("MELESET!");
+        setIsGameOver(true);
+        setTargetWord(data.targetWord || "");
+      } else {
+        const correctCount = data.feedback.filter((f: LetterState) => f === "CORRECT").length;
+        if (correctCount > 0) {
+          setFeedbackBurst("NYARIS!");
+        } else {
+          setFeedbackBurst("COBA LAGI!");
+        }
+        setTimeout(() => setFeedbackBurst(null), 1200);
+      }
+    } catch (err) {
+      console.error("Error submitting guess:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeductTinta = (amount: number) => {
+    const updated = Math.max(0, tintaCount - amount);
+    setTintaCount(updated);
+    saveLocalGameState({ tinta: updated });
+  };
+
+  // Keyboard Status Mapping
+  const letterStatuses: Record<string, LetterState> = {};
+  guesses.forEach((guess, rIdx) => {
+    const rowFeedback = feedbacks[rIdx];
+    if (rowFeedback) {
+      guess.split("").map((char, cIdx) => {
+        const current = letterStatuses[char];
+        const next = rowFeedback[cIdx];
+        if (current === "CORRECT") return;
+        if (next === "CORRECT" || current === "PRESENT") {
+          letterStatuses[char] = next;
+        } else {
+          letterStatuses[char] = next;
+        }
+      });
+    }
+  });
+
+  return (
+    <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
+      <Header
+        mode={mode}
+        onModeToggle={(m) => setMode(m)}
+        tintaCount={tintaCount}
+        streakCount={streakCount}
+      />
+
+      <AnnouncementBanner />
+
+      <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
+        {/* Desktop 2-Column Responsive Layout with Comic Gutter Line (lg+) */}
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Main Game Board Column */}
+          <div className="lg:col-span-7 flex flex-col items-center justify-center">
+            {/* Category & Info Badge */}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="bg-white comic-border px-3 py-1 rounded-full font-bangers text-sm sm:text-base text-comic-ink comic-shadow-sm">
+                KATEGORI: <span className="text-comic-klu">{category}</span>
+              </span>
+              <span className="bg-comic-yellow comic-border px-3 py-1 rounded-full font-bangers text-sm sm:text-base text-comic-ink comic-shadow-sm">
+                TINGKAT: <span className="text-comic-ink">{difficulty}</span>
+              </span>
+            </div>
+
+            {/* Visual Feedback Burst Overlay */}
+            {feedbackBurst && (
+              <div className="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none animate-bounce">
+                <div className="bg-comic-yellow comic-border px-6 py-3 rounded-xl comic-shadow-lg rotate-[-4deg]">
+                  <span className="font-bangers text-4xl sm:text-6xl text-comic-ink tracking-widest drop-shadow">
+                    {feedbackBurst}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Wordle Game Board */}
+            <GameBoard
+              wordLength={wordLength}
+              maxAttempts={6}
+              guesses={guesses}
+              feedbacks={feedbacks}
+              currentGuess={currentGuess}
+              isShaking={isShaking}
+            />
+
+            {/* Result Share Card Modal if Game Over */}
+            {isGameOver && (
+              <ResultShareCard
+                won={isWon}
+                wordId={wordId}
+                targetWord={targetWord}
+                guesses={guesses}
+                feedbacks={feedbacks}
+                attemptsUsed={guesses.length}
+                tintaEarned={tintaEarned}
+                onPlayAgain={() => {
+                  setGuesses([]);
+                  setFeedbacks([]);
+                  setCurrentGuess("");
+                  setIsGameOver(false);
+                  setIsWon(false);
+                  setFeedbackBurst(null);
+                }}
+              />
+            )}
+          </div>
+
+          {/* Comic Gutter Boundary Line for Desktop (lg+) */}
+          <div className="hidden lg:block lg:col-span-1 h-full min-h-[400px] flex justify-center items-center">
+            <div className="w-1.5 h-full bg-comic-ink rounded-full comic-shadow-sm" />
+          </div>
+
+          {/* Clues & Story Column */}
+          <div className="lg:col-span-4 flex flex-col gap-4 w-full">
+            {/* Superhero vs Rival Character Header Banner */}
+            <div className="bg-white comic-border p-3 rounded-lg comic-shadow flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-comic-klu comic-border flex items-center justify-center font-bangers text-white text-base">
+                  KLU
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bangers text-sm text-comic-klu leading-none">Kapten Klu</span>
+                  <span className="text-[10px] text-gray-500 font-sans">Clue Jujur</span>
+                </div>
+              </div>
+
+              <span className="font-bangers text-xl text-comic-ink">VS</span>
+
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col text-right">
+                  <span className="font-bangers text-sm text-comic-bayangan leading-none">Bayangan</span>
+                  <span className="text-[10px] text-gray-500 font-sans">Trik Menyesatkan</span>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-comic-bayangan comic-border flex items-center justify-center font-bangers text-white text-base">
+                  BAY
+                </div>
+              </div>
+            </div>
+
+            {/* Dual Speech Bubble Clue System */}
+            <ClueDualPanel
+              wordId={wordId}
+              tintaCount={tintaCount}
+              onDeductTinta={handleDeductTinta}
+              isHardcoreVoice={mode === "HARDCORE_VOICE"}
+            />
+          </div>
+        </div>
+
+        {/* On-screen Virtual Keyboard (Sticky Bottom on Mobile) */}
+        {!isGameOver && (
+          <div className="w-full mt-4 sticky bottom-2 z-30">
+            <VirtualKeyboard
+              onChar={handleChar}
+              onDelete={handleDelete}
+              onEnter={handleEnter}
+              letterStatuses={letterStatuses}
+              disabled={loading}
+            />
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center font-bangers text-2xl">MEMUAT TEKAKOMIK...</div>}>
+      <GameContainer />
+    </Suspense>
+  );
+}

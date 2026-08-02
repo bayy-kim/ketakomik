@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  --font-bangers: var(--font-bangers), impact, sans-serif;
+  --font-archivo: var(--font-archivo-black), sans-serif;
+  --font-sans: var(--font-plus-jakarta), system-ui, sans-serif;
+
+  --color-comic-ink: #16161A;
+  --color-comic-paper: #FAF7F0;
+  --color-comic-klu: #2B6CFF;
+  --color-comic-bayangan: #FF3D81;
+  --color-comic-correct: #22C55E;
+  --color-comic-present: #EAB308;
+  --color-comic-absent: #64748B;
+  --color-comic-wrong: #F5402C;
+  --color-comic-yellow: #FFD200;
+}
+
+@layer utilities {
+  .font-bangers {
+    font-family: var(--font-bangers);
+  }
+  .font-archivo {
+    font-family: var(--font-archivo);
+  }
+  
+  /* Modern Comic Borders and Shadows */
+  .comic-border {
+    border: 3.5px solid #16161A;
+  }
+  .comic-border-sm {
+    border: 2px solid #16161A;
+  }
+  .comic-shadow {
+    box-shadow: 4px 4px 0px #16161A;
+  }
+  .comic-shadow-sm {
+    box-shadow: 2px 2px 0px #16161A;
+  }
+  .comic-shadow-lg {
+    box-shadow: 6px 6px 0px #16161A;
+  }
+  .comic-shadow-klu {
+    box-shadow: 4px 4px 0px #2B6CFF, 4px 4px 0px 3.5px #16161A;
+  }
+  .comic-shadow-bayangan {
+    box-shadow: 4px 4px 0px #FF3D81, 4px 4px 0px 3.5px #16161A;
+  }
+
+  /* Halftone SVG Patterns */
+  .bg-halftone-dots {
+    background-image: radial-gradient(#16161A 1.5px, transparent 1.5px);
+    background-size: 14px 14px;
+    background-position: 0 0;
+  }
+  .bg-halftone-klu {
+    background-image: radial-gradient(#2B6CFF 2px, transparent 2px);
+    background-size: 12px 12px;
+  }
+  .bg-halftone-bayangan {
+    background-image: radial-gradient(#FF3D81 2px, transparent 2px);
+    background-size: 12px 12px;
+  }
+
+  /* Comic Card / Button bases */
+  .comic-box {
+    background-color: #ffffff;
+    border: 3.5px solid #16161A;
+    border-radius: 6px;
+    box-shadow: 4px 4px 0px #16161A;
+  }
+  .comic-btn {
+    background-color: #FFD200;
+    color: #16161A;
+    font-family: var(--font-bangers);
+    letter-spacing: 0.05em;
+    font-size: 1.25rem;
+    padding: 0.5rem 1.25rem;
+    border: 3.5px solid #16161A;
+    border-radius: 6px;
+    box-shadow: 4px 4px 0px #16161A;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .comic-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0px #16161A;
+  }
+  .comic-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #16161A;
+  }
+}
+
+/* 3D Flip Effects for Letter Box */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Shake Keyframe for wrong guess */
+@keyframes comicShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px) rotate(-1deg); }
+  40%, 80% { transform: translateX(6px) rotate(1deg); }
+}
+.animate-comic-shake {
+  animation: comicShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Speech Bubble Tail Utility */
+.bubble-tail-left::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 14px 14px 0 0;
+  border-color: #ffffff transparent transparent transparent;
+}
+.bubble-tail-left::before {
+  content: "";
+  position: absolute;
+  bottom: -19px;
+  left: 17px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 18px 18px 0 0;
+  border-color: #16161A transparent transparent transparent;
+}
+
+.bubble-tail-right::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 14px 0 0 14px;
+  border-color: #ffffff transparent transparent transparent;
+}
+.bubble-tail-right::before {
+  content: "";
+  position: absolute;
+  bottom: -19px;
+  right: 17px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 18px 0 0 18px;
+  border-color: #16161A transparent transparent transparent;
+}

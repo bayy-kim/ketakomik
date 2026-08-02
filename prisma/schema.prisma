@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum GameMode {
+  NORMAL
+  HARDCORE_VOICE
+}
+
+enum DuelStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String?  @unique
+  passwordHash  String?
+  username      String   @unique
+  avatarSeed    String   @default("klu_fan")
+  role          Role     @default(USER)
+  tinta         Int      @default(50)
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  gameSessions        GameSession[]
+  wordSuggestions    WordSuggestion[] @relation("SubmittedSuggestions")
+  reviewedSuggestions WordSuggestion[] @relation("ReviewedSuggestions")
+
+  @@map("users")
+}
+
+model Chapter {
+  id                  String   @id @default(cuid())
+  title               String
+  weekStartDate       DateTime
+  chapterNote         String?
+  unlockComicImageUrl String?
+  isPublished         Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  words Word[]
+
+  @@map("chapters")
+}
+
+model Word {
+  id             String     @id @default(cuid())
+  chapterId      String?
+  chapter        Chapter?   @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  text           String
+  normalizedText String
+  difficulty     Difficulty @default(MEDIUM)
+  clueHonest     String
+  clueMisleading String
+  scheduledDate  DateTime   @unique
+  category       String     @default("Umum")
+  createdAt      DateTime   @default(now())
+
+  gameSessions   GameSession[]
+  duelChallenges DuelChallenge[]
+
+  @@map("words")
+}
+
+model GameSession {
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anonId          String?
+  wordId          String
+  word            Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  guesses         Json     // Array of { word: string, feedback: ("CORRECT"|"PRESENT"|"ABSENT")[] }
+  attemptsUsed    Int
+  won             Boolean
+  mode            GameMode @default(NORMAL)
+  durationSeconds Int      @default(0)
+  completedAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([anonId])
+  @@index([wordId])
+  @@map("game_sessions")
+}
+
+model DuelChallenge {
+  id                String     @id @default(cuid())
+  wordId            String
+  word              Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  roomCode          String     @unique
+  creatorSessionId  String
+  opponentSessionId String?
+  status            DuelStatus @default(PENDING)
+  createdAt         DateTime   @default(now())
+
+  @@map("duel_challenges")
+}
+
+model WordSuggestion {
+  id                String           @id @default(cuid())
+  submittedByUserId String?
+  submittedByUser   User?            @relation("SubmittedSuggestions", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  text              String
+  note              String?
+  status            SuggestionStatus @default(PENDING)
+  reviewedByAdminId String?
+  reviewedByAdmin   User?            @relation("ReviewedSuggestions", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+  createdAt         DateTime         @default(now())
+
+  @@map("word_suggestions")
+}
+
+model Announcement {
+  id       String    @id @default(cuid())
+  message  String
+  isActive Boolean   @default(true)
+  startAt  DateTime  @default(now())
+  endAt    DateTime?
+
+  @@map("announcements")
+}
+
+model FeatureFlag {
+  id        String  @id @default(cuid())
+  key       String  @unique
+  isEnabled Boolean @default(true)
+
+  @@map("feature_flags")
+}
