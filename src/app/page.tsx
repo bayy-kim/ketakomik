@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { Header } from "@/components/Header";
 import { GameBoard } from "@/components/GameBoard";
 import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { ClueDualPanel } from "@/components/ClueDualPanel";
 import { ResultShareCard } from "@/components/ResultShareCard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { Footer } from "@/components/Footer";
 import { LetterState } from "@/components/LetterBox";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
 
@@ -48,12 +49,6 @@ function GameContainer() {
           setWordLength(data.length || 5);
           setCategory(data.category || "Umum");
           setDifficulty(data.difficulty || "MEDIUM");
-
-          // Restore guesses if played today
-          const history = state.guessesHistory[data.id];
-          if (history) {
-            // Already played today
-          }
         }
       } catch (e) {
         console.error("Gagal memuat kata hari ini:", e);
@@ -63,19 +58,22 @@ function GameContainer() {
     initTodayWord();
   }, []);
 
-  const handleChar = (char: string) => {
+  const handleChar = useCallback((char: string) => {
     if (isGameOver || loading) return;
-    if (currentGuess.length < wordLength) {
-      setCurrentGuess((prev) => prev + char);
-    }
-  };
+    setCurrentGuess((prev) => {
+      if (prev.length < wordLength) {
+        return prev + char.toUpperCase();
+      }
+      return prev;
+    });
+  }, [isGameOver, loading, wordLength]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (isGameOver || loading) return;
     setCurrentGuess((prev) => prev.slice(0, -1));
-  };
+  }, [isGameOver, loading]);
 
-  const handleEnter = async () => {
+  const handleEnter = useCallback(async () => {
     if (isGameOver || loading) return;
     if (currentGuess.length !== wordLength) {
       setIsShaking(true);
@@ -144,7 +142,32 @@ function GameContainer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentGuess, feedbacks, guesses, isGameOver, loading, mode, streakCount, tintaCount, wordId, wordLength]);
+
+  // Global Physical Keyboard Event Listener (Desktop Keyboard Support)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Safety guard: ignore physical keypress if typing inside input or textarea
+      const targetTag = (e.target as HTMLElement)?.tagName?.toUpperCase();
+      if (targetTag === "INPUT" || targetTag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleEnter();
+      } else if (e.key === "Backspace" || e.key === "Delete") {
+        e.preventDefault();
+        handleDelete();
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        e.preventDefault();
+        handleChar(e.key.toUpperCase());
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleChar, handleDelete, handleEnter]);
 
   const handleDeductTinta = (amount: number) => {
     const updated = Math.max(0, tintaCount - amount);
@@ -185,7 +208,7 @@ function GameContainer() {
         {/* Desktop 2-Column Responsive Layout with Comic Gutter Line (lg+) */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main Game Board Column */}
-          <div className="lg:col-span-7 flex flex-col items-center justify-center">
+          <div className="lg:col-span-7 flex flex-col items-center justify-center bg-white lg:comic-border lg:p-6 lg:rounded-2xl lg:comic-shadow relative">
             {/* Category & Info Badge */}
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-white comic-border px-3 py-1 rounded-full font-bangers text-sm sm:text-base text-comic-ink comic-shadow-sm">
@@ -194,6 +217,11 @@ function GameContainer() {
               <span className="bg-comic-yellow comic-border px-3 py-1 rounded-full font-bangers text-sm sm:text-base text-comic-ink comic-shadow-sm">
                 TINGKAT: <span className="text-comic-ink">{difficulty}</span>
               </span>
+            </div>
+
+            {/* Desktop Keyboard Helper Hint */}
+            <div className="hidden lg:flex items-center gap-1.5 text-xs font-sans text-gray-500 mb-2">
+              <span>⌨️ Ketik langsung lewat keyboard komputer: <strong className="text-comic-ink">A-Z</strong> (Huruf) | <strong className="text-comic-ink">Enter</strong> (Cek) | <strong className="text-comic-ink">Backspace</strong> (Hapus)</span>
             </div>
 
             {/* Visual Feedback Burst Overlay */}
@@ -294,6 +322,8 @@ function GameContainer() {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }
