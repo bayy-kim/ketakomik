@@ -9,7 +9,7 @@ export async function GET() {
       chapters = await db.chapter.findMany({
         where: { isPublished: true },
         include: { words: { select: { id: true, scheduledDate: true, difficulty: true, category: true } } },
-        orderBy: { weekStartDate: "desc" },
+        orderBy: { weekStartDate: "asc" }, // Diubah agar Chapter 1 (weekStartDate paling awal) berada di atas/paling awal
       });
     } catch {
       // Prisma error fallback

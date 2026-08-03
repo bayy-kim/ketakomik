@@ -69,9 +69,10 @@ export default function ChapterPage() {
         {/* Chapter List */}
         <div className="flex flex-col gap-6">
           {chapters.map((chapter) => {
-            const completedCount = chapter.words.filter((w) => completedWordIds.includes(w.id)).length;
-            const progressPercent = Math.round((completedCount / (chapter.totalWords || 5)) * 100);
-            const isAllCompleted = completedCount >= (chapter.totalWords || 5);
+            const completedCount = chapter.words ? chapter.words.filter((w) => completedWordIds.includes(w.id)).length : 0;
+            const totalWordsInChapter = chapter.words ? chapter.words.length : (chapter.totalWords || 5);
+            const progressPercent = totalWordsInChapter > 0 ? Math.round((completedCount / totalWordsInChapter) * 100) : 0;
+            const isAllCompleted = totalWordsInChapter > 0 && completedCount >= totalWordsInChapter;
 
             return (
               <div key={chapter.id} className="bg-white comic-border p-5 rounded-xl comic-shadow flex flex-col gap-4">
@@ -105,7 +106,7 @@ export default function ChapterPage() {
                   <div className="flex justify-between text-xs font-bangers text-comic-ink">
                     <span>PROGRESS PENCARIAN KATA</span>
                     <span>
-                      {completedCount} / {chapter.totalWords || 5} KATA ({progressPercent}%)
+                      {completedCount} / {totalWordsInChapter} KATA ({progressPercent}%)
                     </span>
                   </div>
                   <div className="w-full h-5 bg-gray-200 comic-border-sm rounded-full overflow-hidden p-0.5">
@@ -117,36 +118,54 @@ export default function ChapterPage() {
                 </div>
 
                 {/* Words Grid inside Chapter */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
-                  {chapter.words.map((word, idx) => {
-                    const isSolved = completedWordIds.includes(word.id);
+                {chapter.words && chapter.words.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
+                    {chapter.words.map((word, idx) => {
+                      const isSolved = completedWordIds.includes(word.id);
 
-                    return (
-                      <div
-                        key={word.id}
-                        className={`comic-border p-2.5 rounded-lg flex flex-col items-center justify-center gap-1 ${
-                          isSolved ? "bg-green-100" : "bg-gray-50"
-                        }`}
-                      >
-                        <span className="font-bangers text-sm text-comic-ink">KATA #{idx + 1}</span>
-                        <span className="text-[10px] text-gray-500 font-sans">{word.category}</span>
-                        {isSolved ? (
-                          <CheckCircle className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <Link
-                            href={`/play?wordId=${word.id}`}
-                            className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5"
-                          >
-                            Mainkan <ArrowRight className="w-3 h-3" />
-                          </Link>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                      return (
+                        <div
+                          key={word.id}
+                          className={`comic-border p-2.5 rounded-lg flex flex-col items-center justify-center gap-1 ${
+                            isSolved ? "bg-green-100" : "bg-gray-50"
+                          }`}
+                        >
+                          <span className="font-bangers text-sm text-comic-ink">KATA #{idx + 1}</span>
+                          <span className="text-[10px] text-gray-500 font-sans">{word.category}</span>
+                          {isSolved ? (
+                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          ) : (
+                            <Link
+                              href={`/play?wordId=${word.id}`}
+                              className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5"
+                            >
+                              Mainkan <ArrowRight className="w-3 h-3" />
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
+
+          {/* Coming Soon Card (Selalu di bagian paling bawah setelah semua chapter) */}
+          <div className="bg-gray-100 comic-border p-6 rounded-xl comic-shadow opacity-90 flex flex-col items-center text-center gap-3 border-dashed border-gray-400">
+            <div className="bg-comic-bayangan text-white p-3 rounded-full comic-border-sm">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="bg-pink-100 text-comic-bayangan font-bangers text-xs px-2.5 py-0.5 rounded comic-border-sm">
+                SEGERA HADIR
+              </span>
+              <h3 className="font-bangers text-2xl text-comic-ink mt-1">CHAPTER SELANJUTNYA DARI KAPTEN KLU</h3>
+              <p className="text-xs sm:text-sm font-sans text-gray-600 max-w-md mt-1">
+                Kapten Klu dan Bayangan sedang mempersiapkan teka-teki misteri baru! Tambahan chapter baru dari admin akan langsung muncul di atas kartu ini.
+              </p>
+            </div>
+          </div>
         </div>
       </main>
 
