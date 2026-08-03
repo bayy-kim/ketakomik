@@ -83,7 +83,7 @@ export default function AuthPage() {
       if (!loginRes?.error) {
         window.location.href = "/play";
       } else {
-        setSuccessMsg("Pendaftaran berhasil! Silakan masuk dengan akun baru Anda.");
+        setSuccessMsg("Pendaftaran berhasil! Silakan Sign In dengan akun baru Anda.");
         setTab("login");
         setLoginUsername(regUsername);
         setLoading(false);
@@ -116,7 +116,7 @@ export default function AuthPage() {
             </div>
           </div>
 
-          {/* Tab Switcher: MASUK vs DAFTAR */}
+          {/* Tab Switcher: MASUK vs SIGN IN / DAFTAR */}
           <div className="flex gap-2 bg-gray-100 comic-border-sm p-1 rounded-xl">
             <button
               onClick={() => {
@@ -145,7 +145,7 @@ export default function AuthPage() {
                   : "text-gray-600 hover:text-comic-ink"
               }`}
             >
-              <UserPlus className="w-4 h-4" /> DAFTAR BARU
+              <UserPlus className="w-4 h-4" /> SIGN IN / DAFTAR
             </button>
           </div>
 
@@ -173,7 +173,7 @@ export default function AuthPage() {
                 d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
               />
             </svg>
-            <span>MASUK DENGAN GOOGLE</span>
+            <span>SIGN IN DENGAN GOOGLE</span>
           </button>
 
           <div className="flex items-center gap-3 my-1">
@@ -288,7 +288,7 @@ export default function AuthPage() {
                 disabled={loading}
                 className="comic-btn text-base bg-comic-bayangan hover:bg-pink-600 text-white w-full py-2.5 mt-1"
               >
-                <UserPlus className="w-4 h-4" /> {loading ? "Mendaftarkan..." : "BUAT AKUN BARU"}
+                <UserPlus className="w-4 h-4" /> {loading ? "Mendaftarkan..." : "SIGN IN / DAFTAR AKUN BARU"}
               </button>
             </form>
           )}

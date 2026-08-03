@@ -6,10 +6,12 @@ import { db } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "tekakomik-super-secret-key-2026-modern-comic-game",
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       name: "Tekakonik Credentials",
@@ -89,6 +91,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {
     signIn: "/auth/login",
+    error: "/auth/login",
   },
   session: {
     strategy: "jwt",
