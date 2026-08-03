@@ -23,8 +23,8 @@ export async function POST(request: Request) {
       if (wordDb) {
         targetWordText = wordDb.normalizedText.toUpperCase();
       }
-    } catch {
-      // Prisma error fallback
+    } catch (e) {
+      console.error(e);
     }
 
     if (!targetWordText) {
@@ -93,11 +93,12 @@ export async function POST(request: Request) {
             wordId: wordDb?.id || wordId,
             userId: userId || null,
             anonId: anonId || "guest",
-            guesses: [{ guess: normalizedGuess, feedback, score }],
+            guesses: [{ guess: normalizedGuess, feedback }],
             attemptsUsed: attemptNumber,
             won: isWon,
             mode: mode === "HARDCORE_VOICE" ? "HARDCORE_VOICE" : "NORMAL",
             durationSeconds,
+            score, // Save calculated score to database
           },
         });
 
@@ -111,8 +112,8 @@ export async function POST(request: Request) {
           });
         }
       }
-    } catch {
-      // DB fallback
+    } catch (e) {
+      console.error("Failed to save game session to db:", e);
     }
 
     const responsePayload: {

@@ -18,7 +18,6 @@ import {
   X,
   Check,
   ShieldCheck,
-  Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
@@ -171,6 +170,7 @@ export default function UserDashboardPage() {
       setToastMsg(`🎉 KLAIM BERHASIL! +${rewardTinta} Tinta ditambahkan ke akunmu!`);
       setTimeout(() => setToastMsg(null), 3000);
 
+      // Refresh dashboard state
       fetchDashboardData();
     } catch (e) {
       console.error(e);
@@ -213,25 +213,25 @@ export default function UserDashboardPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-comic-yellow comic-border px-5 py-2.5 rounded-xl comic-shadow-lg text-comic-ink font-bangers text-lg sm:text-xl"
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-comic-yellow comic-border px-4 py-2 rounded-xl comic-shadow-lg text-comic-ink font-bangers text-base sm:text-xl text-center max-w-[90vw]"
           >
             {toastMsg}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-3 py-6 flex flex-col gap-6">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-2.5 sm:px-4 py-4 sm:py-6 flex flex-col gap-5">
         {/* ===== USER PROFILE HEADER CARD ===== */}
-        <div className="bg-white comic-border p-5 rounded-2xl comic-shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
-          <div className="flex items-center gap-4 text-center sm:text-left">
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left w-full sm:w-auto">
             {/* Avatar Badge Terbungkus Border Komik */}
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-comic-yellow comic-border flex items-center justify-center font-bangers text-3xl sm:text-4xl text-comic-ink comic-shadow shrink-0 rotate-[-3deg] select-none">
               {currentAvatarEmoji}
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center sm:items-start">
               <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h1 className="font-bangers text-3xl sm:text-4xl text-comic-ink leading-none">
+                <h1 className="font-bangers text-2xl sm:text-4xl text-comic-ink leading-none">
                   {user?.username}
                 </h1>
                 <button
@@ -250,11 +250,11 @@ export default function UserDashboardPage() {
               <p className="text-xs font-sans text-gray-600 mt-1">{user?.email || "Detektif Tekakonik"}</p>
 
               {/* Status Pills */}
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
-                <div className="bg-blue-100 comic-border-sm px-2.5 py-0.5 rounded text-xs font-bangers text-comic-ink flex items-center gap-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mt-2">
+                <div className="bg-blue-100 comic-border-sm px-2.5 py-0.5 rounded-md text-xs font-bangers text-comic-ink flex items-center gap-1">
                   <Droplet className="w-3.5 h-3.5 text-comic-klu fill-comic-klu" /> {user?.tinta} Tinta
                 </div>
-                <div className="bg-amber-100 comic-border-sm px-2.5 py-0.5 rounded text-xs font-bangers text-comic-ink flex items-center gap-1">
+                <div className="bg-amber-100 comic-border-sm px-2.5 py-0.5 rounded-md text-xs font-bangers text-comic-ink flex items-center gap-1">
                   <Flame className="w-3.5 h-3.5 text-orange-600 fill-orange-500" /> {user?.currentStreak} Streak Harian
                 </div>
               </div>
@@ -265,14 +265,14 @@ export default function UserDashboardPage() {
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Link
               href="/play"
-              className="comic-btn text-sm bg-comic-yellow hover:bg-yellow-400 text-comic-ink flex-1 sm:flex-initial py-2.5"
+              className="comic-btn text-xs sm:text-sm bg-comic-yellow hover:bg-yellow-400 text-comic-ink flex-1 sm:flex-initial py-2.5"
             >
               <Play className="w-4 h-4 fill-comic-ink" /> MAIN GAME
             </Link>
 
             <button
               onClick={() => setShowLogoutModal(true)}
-              className="comic-btn text-sm bg-red-500 hover:bg-red-600 text-white flex-1 sm:flex-initial py-2.5"
+              className="comic-btn text-xs sm:text-sm bg-red-500 hover:bg-red-600 text-white flex-1 sm:flex-initial py-2.5"
             >
               <LogOut className="w-4 h-4" /> KELUAR
             </button>
@@ -280,46 +280,46 @@ export default function UserDashboardPage() {
         </div>
 
         {/* ===== STATS OVERVIEW CARDS ===== */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="comic-box p-4 flex flex-col items-center text-center gap-1 bg-blue-50">
-            <Award className="w-6 h-6 text-comic-klu" />
-            <span className="font-bangers text-2xl sm:text-3xl text-comic-ink leading-none">{stats?.totalWon || 0} / {stats?.totalPlayed || 0}</span>
-            <span className="text-xs font-sans text-gray-600 font-bold">Kata Ditebak</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="comic-box p-3 sm:p-4 flex flex-col items-center text-center gap-1 bg-blue-50">
+            <Award className="w-5 h-5 sm:w-6 sm:h-6 text-comic-klu" />
+            <span className="font-bangers text-xl sm:text-3xl text-comic-ink leading-none">{stats?.totalWon || 0} / {stats?.totalPlayed || 0}</span>
+            <span className="text-[11px] sm:text-xs font-sans text-gray-700 font-bold">Kata Ditebak</span>
           </div>
 
-          <div className="comic-box p-4 flex flex-col items-center text-center gap-1 bg-green-50">
-            <TrendingUp className="w-6 h-6 text-emerald-600" />
-            <span className="font-bangers text-2xl sm:text-3xl text-comic-ink leading-none">{stats?.winRate || 0}%</span>
-            <span className="text-xs font-sans text-gray-600 font-bold">Tingkat Kemenangan</span>
+          <div className="comic-box p-3 sm:p-4 flex flex-col items-center text-center gap-1 bg-green-50">
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+            <span className="font-bangers text-xl sm:text-3xl text-comic-ink leading-none">{stats?.winRate || 0}%</span>
+            <span className="text-[11px] sm:text-xs font-sans text-gray-700 font-bold">Tingkat Kemenangan</span>
           </div>
 
-          <div className="comic-box p-4 flex flex-col items-center text-center gap-1 bg-yellow-50">
-            <Trophy className="w-6 h-6 text-comic-yellow fill-comic-yellow" />
-            <span className="font-bangers text-2xl sm:text-3xl text-comic-ink leading-none">{stats?.avgAttempts || "0.0"}x</span>
-            <span className="text-xs font-sans text-gray-600 font-bold">Rata-rata Percobaan</span>
+          <div className="comic-box p-3 sm:p-4 flex flex-col items-center text-center gap-1 bg-yellow-50">
+            <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-comic-yellow fill-comic-yellow" />
+            <span className="font-bangers text-xl sm:text-3xl text-comic-ink leading-none">{stats?.avgAttempts || "0.0"}x</span>
+            <span className="text-[11px] sm:text-xs font-sans text-gray-700 font-bold">Rata Percobaan</span>
           </div>
 
-          <div className="comic-box p-4 flex flex-col items-center text-center gap-1 bg-pink-50">
-            <Clock className="w-6 h-6 text-comic-bayangan" />
-            <span className="font-bangers text-xl sm:text-2xl text-comic-ink leading-none">{formatDuration(stats?.totalDurationSeconds || 0)}</span>
-            <span className="text-xs font-sans text-gray-600 font-bold">Akumulasi Waktu</span>
+          <div className="comic-box p-3 sm:p-4 flex flex-col items-center text-center gap-1 bg-pink-50">
+            <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-comic-bayangan" />
+            <span className="font-bangers text-lg sm:text-2xl text-comic-ink leading-none">{formatDuration(stats?.totalDurationSeconds || 0)}</span>
+            <span className="text-[11px] sm:text-xs font-sans text-gray-700 font-bold">Akumulasi Waktu</span>
           </div>
         </div>
 
         {/* ===== ANALITIK JAWABAN PER HARI (RECHARTS CHART) ===== */}
-        <div className="bg-white comic-border p-5 rounded-2xl comic-shadow flex flex-col gap-4">
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <div className="bg-comic-klu text-white font-bangers text-lg sm:text-xl px-3.5 py-1 rounded comic-border-sm">
+            <div className="bg-comic-klu text-white font-bangers text-base sm:text-xl px-3 py-1 rounded comic-border-sm">
               📊 ANALITIK JAWABAN HARIAN (7 HARI TERAKHIR)
             </div>
           </div>
 
-          <div className="w-full h-56">
+          <div className="w-full h-48 sm:h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyAnalytics}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
                 <Tooltip />
                 <Bar dataKey="played" name="Total Dimainkan" fill="#FFD200" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="won" name="Berhasil Ditebak" fill="#22C55E" radius={[4, 4, 0, 0]} />
@@ -329,13 +329,13 @@ export default function UserDashboardPage() {
         </div>
 
         {/* ===== ACHIEVEMENTS GRID WITH COMIC-BORDERED BADGES & CLAIM BUTTONS ===== */}
-        <div className="bg-white comic-border p-5 rounded-2xl comic-shadow flex flex-col gap-5">
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className="bg-comic-yellow text-comic-ink font-bangers text-lg sm:text-xl px-3.5 py-1 rounded comic-border-sm flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-comic-ink fill-comic-ink" />
+            <div className="bg-comic-yellow text-comic-ink font-bangers text-base sm:text-xl px-3 py-1 rounded comic-border-sm flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-comic-ink fill-comic-ink" />
               PENCAPAIAN DETEKTIF (ACHIEVEMENTS)
             </div>
-            <span className="font-bangers text-sm sm:text-base text-gray-600">
+            <span className="font-bangers text-xs sm:text-base text-gray-600">
               KLAIM TINTA GRATIS!
             </span>
           </div>
@@ -344,14 +344,14 @@ export default function UserDashboardPage() {
             Selesaikan target tebakan kata (25, 50, 75, 100, 125, 150) dan akumulasi waktu bermain untuk mengklaim bonus Tinta!
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {achievements.map((ach) => {
               const progressPercent = Math.min(100, Math.round((ach.currentProgress / ach.target) * 100));
 
               return (
                 <div
                   key={ach.id}
-                  className={`comic-border p-4 rounded-xl flex flex-col justify-between gap-3 relative overflow-hidden ${
+                  className={`comic-border p-3.5 sm:p-4 rounded-xl flex flex-col justify-between gap-3 relative overflow-hidden ${
                     ach.isClaimed
                       ? "bg-green-50/80 border-emerald-600"
                       : ach.isUnlocked
@@ -362,7 +362,7 @@ export default function UserDashboardPage() {
                   {/* Badge Gambar Terbungkus Border Komik Tebal */}
                   <div className="flex items-start gap-3">
                     <div
-                      className={`w-14 h-14 rounded-xl comic-border flex items-center justify-center text-3xl comic-shadow shrink-0 select-none ${
+                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl comic-border flex items-center justify-center text-2xl sm:text-3xl comic-shadow shrink-0 select-none ${
                         ach.isUnlocked ? "bg-comic-yellow" : "bg-gray-200"
                       }`}
                     >
@@ -370,19 +370,19 @@ export default function UserDashboardPage() {
                     </div>
 
                     <div className="flex flex-col">
-                      <span className="font-bangers text-lg text-comic-ink leading-tight">{ach.title}</span>
+                      <span className="font-bangers text-base sm:text-lg text-comic-ink leading-tight">{ach.title}</span>
                       <p className="text-[11px] font-sans text-gray-600 mt-0.5 leading-snug">{ach.description}</p>
                     </div>
                   </div>
 
                   {/* Progress Bar & Status */}
-                  <div className="flex flex-col gap-1.5 mt-1">
-                    <div className="flex justify-between text-[11px] font-bangers text-comic-ink">
+                  <div className="flex flex-col gap-1 mt-1">
+                    <div className="flex justify-between text-[10px] sm:text-[11px] font-bangers text-comic-ink">
                       <span>PROGRESS: {ach.category === "WAKTU" ? formatDuration(ach.currentProgress) : ach.currentProgress}</span>
                       <span>TARGET: {ach.category === "WAKTU" ? formatDuration(ach.target) : ach.target} ({progressPercent}%)</span>
                     </div>
 
-                    <div className="w-full h-3.5 bg-gray-200 comic-border-sm rounded-full overflow-hidden">
+                    <div className="w-full h-3 bg-gray-200 comic-border-sm rounded-full overflow-hidden">
                       <div
                         className="h-full bg-comic-correct transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
@@ -403,7 +403,7 @@ export default function UserDashboardPage() {
                       onClick={() => handleClaimAchievement(ach.id, ach.rewardTinta)}
                       className="comic-btn text-xs bg-comic-yellow hover:bg-yellow-400 text-comic-ink py-2 w-full"
                     >
-                      <Sparkles className="w-4 h-4 fill-comic-ink animate-bounce" />
+                      <Sparkles className="w-3.5 h-3.5 fill-comic-ink animate-bounce" />
                       {claimingId === ach.id ? "MENGKLAIM..." : `KLAIM +${ach.rewardTinta} TINTA`}
                     </motion.button>
                   ) : (
@@ -421,7 +421,7 @@ export default function UserDashboardPage() {
       {/* ===== MODAL EDIT PROFIL KOMIK ===== */}
       {showEditProfileModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-comic-paper comic-border p-6 rounded-2xl comic-shadow-lg max-w-md w-full flex flex-col gap-4 animate-in fade-in zoom-in relative">
+          <div className="bg-comic-paper comic-border p-5 sm:p-6 rounded-2xl comic-shadow-lg max-w-md w-full flex flex-col gap-4 animate-in fade-in zoom-in relative">
             <button
               onClick={() => setShowEditProfileModal(false)}
               className="absolute top-4 right-4 p-1 rounded-md comic-border-sm hover:bg-gray-100 text-comic-ink"
@@ -429,12 +429,12 @@ export default function UserDashboardPage() {
               <X className="w-4 h-4" />
             </button>
 
-            <div className="bg-comic-yellow comic-border p-3 rounded-xl flex items-center gap-2">
-              <Edit3 className="w-6 h-6 text-comic-ink" />
-              <h2 className="font-bangers text-2xl text-comic-ink">EDIT PROFIL KOMIK</h2>
+            <div className="bg-comic-yellow comic-border p-2.5 rounded-xl flex items-center gap-2">
+              <Edit3 className="w-5 h-5 text-comic-ink" />
+              <h2 className="font-bangers text-xl sm:text-2xl text-comic-ink">EDIT PROFIL KOMIK</h2>
             </div>
 
-            <form onSubmit={handleSaveProfile} className="flex flex-col gap-4 text-xs font-sans">
+            <form onSubmit={handleSaveProfile} className="flex flex-col gap-3.5 text-xs font-sans">
               <div className="flex flex-col gap-1">
                 <label className="font-bangers text-sm text-comic-ink">USERNAME KOMIK BARU:</label>
                 <input
@@ -443,14 +443,14 @@ export default function UserDashboardPage() {
                   placeholder="DetektifSuper99"
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value)}
-                  className="bg-white comic-border px-3 py-2 rounded-md font-bangers text-lg text-comic-ink"
+                  className="bg-white comic-border px-3 py-2 rounded-md font-bangers text-base text-comic-ink"
                 />
               </div>
 
               {/* Pilihan Avatar Komik Terbungkus Border Komik */}
               <div className="flex flex-col gap-1.5">
                 <label className="font-bangers text-sm text-comic-ink">PILIH AVATAR KOMIK:</label>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-3 gap-2">
                   {COMIC_AVATARS.map((av) => {
                     const isSelected = editAvatarSeed === av.id;
                     return (
@@ -464,8 +464,8 @@ export default function UserDashboardPage() {
                             : "bg-white hover:bg-gray-50 opacity-80"
                         }`}
                       >
-                        <span className="text-3xl select-none">{av.emoji}</span>
-                        <span className="font-bangers text-[11px] text-comic-ink leading-none">{av.label}</span>
+                        <span className="text-2xl sm:text-3xl select-none">{av.emoji}</span>
+                        <span className="font-bangers text-[10px] text-comic-ink leading-none">{av.label}</span>
                       </button>
                     );
                   })}
@@ -475,7 +475,7 @@ export default function UserDashboardPage() {
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="comic-btn text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-2.5 mt-2"
+                className="comic-btn text-sm sm:text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-2.5 mt-1"
               >
                 <Check className="w-4 h-4" /> {savingProfile ? "Menyimpan..." : "SIMPAN PERUBAHAN PROFIL"}
               </button>

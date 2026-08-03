@@ -11,9 +11,9 @@ export async function GET(request: Request) {
       id: string;
       attemptsUsed: number;
       durationSeconds: number;
+      score: number;
       mode: string;
       anonId: string | null;
-      guesses: unknown;
       user: { username: string; avatarSeed: string; currentStreak: number } | null;
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
           user: { select: { username: true, avatarSeed: true, currentStreak: true } },
           word: { select: { scheduledDate: true } },
         },
-        orderBy: [{ attemptsUsed: "asc" }, { durationSeconds: "asc" }],
+        orderBy: [{ score: "desc" }, { attemptsUsed: "asc" }, { durationSeconds: "asc" }],
         take: 50,
       });
     } catch {
@@ -47,12 +47,6 @@ export async function GET(request: Request) {
     }
 
     const leaderboard = sessions.map((s, idx) => {
-      // Calculate Comic Score: 100 - (attemptsUsed - 1) * 15 + speedBonus + modeBonus
-      const baseScore = Math.max(25, 100 - (s.attemptsUsed - 1) * 15);
-      const speedBonus = s.durationSeconds > 0 && s.durationSeconds < 30 ? Math.max(0, 30 - s.durationSeconds) : 0;
-      const voiceBonus = s.mode === "HARDCORE_VOICE" ? 25 : 0;
-      const comicScore = baseScore + speedBonus + voiceBonus;
-
       let badge = "💥 Sleuth";
       if (idx === 0) badge = "🦸‍♂️ Top Detective";
       else if (idx === 1) badge = "🔍 Master Decipher";
@@ -61,7 +55,7 @@ export async function GET(request: Request) {
       return {
         rank: idx + 1,
         name: s.user?.username || `Guest_${s.anonId?.slice(0, 6) || "Agent"}`,
-        score: comicScore,
+        score: s.score || 80,
         attempts: s.attemptsUsed,
         duration: s.durationSeconds,
         mode: s.mode,
