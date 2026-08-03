@@ -335,6 +335,19 @@ function PlayGameContainer() {
                 tintaEarned={tintaEarned}
               />
             )}
+
+            {/* On-screen Virtual Keyboard (Inside left column, below game board) */}
+            {!isGameOver && (
+              <div className="w-full mt-4 z-30">
+                <VirtualKeyboard
+                  onChar={handleChar}
+                  onDelete={handleDelete}
+                  onEnter={handleEnter}
+                  letterStatuses={letterStatuses}
+                  disabled={loading || isAlreadyCompletedToday}
+                />
+              </div>
+            )}
           </div>
 
           {/* Comic Gutter Boundary Line for Desktop (lg+) */}
@@ -378,19 +391,6 @@ function PlayGameContainer() {
             />
           </div>
         </div>
-
-        {/* On-screen Virtual Keyboard (Sticky Bottom on Mobile) */}
-        {!isGameOver && (
-          <div className="w-full mt-4 sticky bottom-0 z-30">
-            <VirtualKeyboard
-              onChar={handleChar}
-              onDelete={handleDelete}
-              onEnter={handleEnter}
-              letterStatuses={letterStatuses}
-              disabled={loading || isAlreadyCompletedToday}
-            />
-          </div>
-        )}
       </main>
     </div>
   );

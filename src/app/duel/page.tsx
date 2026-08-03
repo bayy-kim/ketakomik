@@ -65,9 +65,11 @@ export default function DuelLandingPage() {
               />
               <button
                 onClick={handleJoinDuel}
-                className="comic-btn text-sm bg-comic-klu text-white hover:bg-blue-600"
+                className="comic-btn text-sm bg-comic-klu text-white hover:bg-blue-600 flex items-center justify-center gap-1.5 px-3 min-w-[48px] shrink-0"
+                title="Gabung Duel"
               >
-                GABUNG <ArrowRight className="w-4 h-4" />
+                <span className="hidden sm:inline">GABUNG</span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
             </div>
           </div>
