@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { User, Lock, LogIn, Mail, UserPlus, ShieldAlert, Sparkles } from "lucide-react";
+import { User, Lock, LogIn, Mail, UserPlus, ShieldAlert, Sparkles, HelpCircle } from "lucide-react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
@@ -212,9 +213,17 @@ export default function AuthPage() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
-                  <Lock className="w-4 h-4 text-comic-klu" /> PASSWORD:
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
+                    <Lock className="w-4 h-4 text-comic-klu" /> PASSWORD:
+                  </label>
+                  <Link
+                    href="/lupakatasandi"
+                    className="text-xs font-sans text-comic-klu font-bold hover:underline flex items-center gap-0.5"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" /> Lupa Kata Sandi?
+                  </Link>
+                </div>
                 <input
                   type="password"
                   required
