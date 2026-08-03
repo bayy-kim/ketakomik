@@ -258,7 +258,7 @@ function PlayGameContainer() {
 
       <AnnouncementBanner />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-4 flex flex-col items-center justify-between pb-24 sm:pb-4">
         {/* Lock Banner if Already Solved Today */}
         {isAlreadyCompletedToday && (
           <div className="w-full bg-amber-100 comic-border p-3.5 rounded-xl comic-shadow mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
@@ -381,7 +381,7 @@ function PlayGameContainer() {
 
         {/* On-screen Virtual Keyboard (Sticky Bottom on Mobile) */}
         {!isGameOver && (
-          <div className="w-full mt-4 sticky bottom-2 z-30">
+          <div className="w-full mt-4 sticky bottom-0 z-30">
             <VirtualKeyboard
               onChar={handleChar}
               onDelete={handleDelete}
