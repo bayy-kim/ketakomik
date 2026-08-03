@@ -9,6 +9,8 @@ import { ResultShareCard } from "@/components/ResultShareCard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LetterState } from "@/components/LetterBox";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
+import { CheckCircle2, Lock, ArrowRight, BookOpen, Clock } from "lucide-react";
+import Link from "next/link";
 
 function PlayGameContainer() {
   const [wordId, setWordId] = useState<string>("w1");
@@ -25,12 +27,15 @@ function PlayGameContainer() {
   const [isGameOver, setIsGameOver] = useState(false);
   const [targetWord, setTargetWord] = useState<string>("");
   const [tintaEarned, setTintaEarned] = useState<number>(0);
+  const [comicScore, setComicScore] = useState<number>(0);
+  const [isAlreadyCompletedToday, setIsAlreadyCompletedToday] = useState<boolean>(false);
   
   const [tintaCount, setTintaCount] = useState<number>(50);
   const [streakCount, setStreakCount] = useState<number>(0);
   const [mode, setMode] = useState<"NORMAL" | "HARDCORE_VOICE">("NORMAL");
   const [loading, setLoading] = useState(false);
   const [feedbackBurst, setFeedbackBurst] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<number>(Date.now());
 
   // Initialize word and local storage state
   useEffect(() => {
@@ -38,6 +43,7 @@ function PlayGameContainer() {
     setTintaCount(state.tinta);
     setStreakCount(state.streak);
     setMode(state.mode);
+    setStartTime(Date.now());
 
     async function initTodayWord() {
       try {
@@ -48,6 +54,19 @@ function PlayGameContainer() {
           setWordLength(data.length || 5);
           setCategory(data.category || "Umum");
           setDifficulty(data.difficulty || "MEDIUM");
+
+          // Lock today's word if already solved in local history
+          if (state.completedWordIds && state.completedWordIds.includes(data.id)) {
+            const saved = state.guessesHistory[data.id];
+            if (saved) {
+              setGuesses(saved.guesses || []);
+              setFeedbacks(saved.feedbacks || []);
+              setIsWon(saved.won);
+              setIsGameOver(true);
+              setIsAlreadyCompletedToday(true);
+              setComicScore(saved.score || 80);
+            }
+          }
         }
       } catch (e) {
         console.error("Gagal memuat kata hari ini:", e);
@@ -58,22 +77,22 @@ function PlayGameContainer() {
   }, []);
 
   const handleChar = useCallback((char: string) => {
-    if (isGameOver || loading) return;
+    if (isGameOver || loading || isAlreadyCompletedToday) return;
     setCurrentGuess((prev) => {
       if (prev.length < wordLength) {
         return prev + char.toUpperCase();
       }
       return prev;
     });
-  }, [isGameOver, loading, wordLength]);
+  }, [isGameOver, loading, isAlreadyCompletedToday, wordLength]);
 
   const handleDelete = useCallback(() => {
-    if (isGameOver || loading) return;
+    if (isGameOver || loading || isAlreadyCompletedToday) return;
     setCurrentGuess((prev) => prev.slice(0, -1));
-  }, [isGameOver, loading]);
+  }, [isGameOver, loading, isAlreadyCompletedToday]);
 
   const handleEnter = useCallback(async () => {
-    if (isGameOver || loading) return;
+    if (isGameOver || loading || isAlreadyCompletedToday) return;
     if (currentGuess.length !== wordLength) {
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
@@ -81,6 +100,8 @@ function PlayGameContainer() {
     }
 
     setLoading(true);
+    const durationSeconds = Math.round((Date.now() - startTime) / 1000);
+
     try {
       const state = getLocalGameState();
       const res = await fetch("/api/game/guess", {
@@ -92,6 +113,7 @@ function PlayGameContainer() {
           attemptNumber: guesses.length + 1,
           anonId: state.anonId,
           mode,
+          durationSeconds,
         }),
       });
 
@@ -110,23 +132,57 @@ function PlayGameContainer() {
       setFeedbacks(newFeedbacks);
       setCurrentGuess("");
 
-      // Burst feedback text trigger
       if (data.isWon) {
         setFeedbackBurst("TEPAT!");
         setIsWon(true);
         setIsGameOver(true);
+        setIsAlreadyCompletedToday(true);
         setTintaEarned(data.tintaEarned || 30);
+        setComicScore(data.score || 85);
         setTargetWord(data.targetWord || currentGuess);
 
         const newTinta = tintaCount + (data.tintaEarned || 30);
         const newStreak = streakCount + 1;
         setTintaCount(newTinta);
         setStreakCount(newStreak);
-        saveLocalGameState({ tinta: newTinta, streak: newStreak });
+
+        // Lock & save completed word state permanently
+        const completedIds = Array.from(new Set([...(state.completedWordIds || []), wordId]));
+        saveLocalGameState({
+          tinta: newTinta,
+          streak: newStreak,
+          completedWordIds: completedIds,
+          guessesHistory: {
+            ...state.guessesHistory,
+            [wordId]: {
+              guesses: newGuesses,
+              feedbacks: newFeedbacks,
+              won: true,
+              completedAt: new Date().toISOString(),
+              score: data.score || 85,
+            },
+          },
+        });
       } else if (data.isGameOver) {
         setFeedbackBurst("MELESET!");
         setIsGameOver(true);
+        setIsAlreadyCompletedToday(true);
         setTargetWord(data.targetWord || "");
+
+        const completedIds = Array.from(new Set([...(state.completedWordIds || []), wordId]));
+        saveLocalGameState({
+          completedWordIds: completedIds,
+          guessesHistory: {
+            ...state.guessesHistory,
+            [wordId]: {
+              guesses: newGuesses,
+              feedbacks: newFeedbacks,
+              won: false,
+              completedAt: new Date().toISOString(),
+              score: 0,
+            },
+          },
+        });
       } else {
         const correctCount = data.feedback.filter((f: LetterState) => f === "CORRECT").length;
         if (correctCount > 0) {
@@ -141,9 +197,9 @@ function PlayGameContainer() {
     } finally {
       setLoading(false);
     }
-  }, [currentGuess, feedbacks, guesses, isGameOver, loading, mode, streakCount, tintaCount, wordId, wordLength]);
+  }, [currentGuess, feedbacks, guesses, isAlreadyCompletedToday, isGameOver, loading, mode, startTime, streakCount, tintaCount, wordId, wordLength]);
 
-  // Global Physical Keyboard Event Listener (Desktop Keyboard Support)
+  // Global Physical Keyboard Event Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const targetTag = (e.target as HTMLElement)?.tagName?.toUpperCase();
@@ -203,7 +259,31 @@ function PlayGameContainer() {
       <AnnouncementBanner />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-4 flex flex-col items-center justify-between">
-        {/* Desktop 2-Column Responsive Layout with Comic Gutter Line (lg+) */}
+        {/* Lock Banner if Already Solved Today */}
+        {isAlreadyCompletedToday && (
+          <div className="w-full bg-amber-100 comic-border p-3.5 rounded-xl comic-shadow mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+              <div>
+                <h3 className="font-bangers text-xl text-comic-ink leading-none">
+                  SOAL HARI INI TELAH SELESAI! (SKOR KOMIK: {comicScore})
+                </h3>
+                <p className="text-xs font-sans text-gray-700 mt-0.5">
+                  Kamu tidak dapat mengulang kata hari ini. Lanjutkan petualangan ke Story Chapters atau Mode Duel!
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/chapter"
+              className="comic-btn text-xs sm:text-sm bg-comic-yellow text-comic-ink shrink-0"
+            >
+              <BookOpen className="w-4 h-4" /> KATA SELANJUTNYA (CHAPTERS) <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+
+        {/* Desktop 2-Column Responsive Layout */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main Game Board Column */}
           <div className="lg:col-span-7 flex flex-col items-center justify-center bg-white lg:comic-border lg:p-6 lg:rounded-2xl lg:comic-shadow relative">
@@ -253,14 +333,6 @@ function PlayGameContainer() {
                 feedbacks={feedbacks}
                 attemptsUsed={guesses.length}
                 tintaEarned={tintaEarned}
-                onPlayAgain={() => {
-                  setGuesses([]);
-                  setFeedbacks([]);
-                  setCurrentGuess("");
-                  setIsGameOver(false);
-                  setIsWon(false);
-                  setFeedbackBurst(null);
-                }}
               />
             )}
           </div>
@@ -315,7 +387,7 @@ function PlayGameContainer() {
               onDelete={handleDelete}
               onEnter={handleEnter}
               letterStatuses={letterStatuses}
-              disabled={loading}
+              disabled={loading || isAlreadyCompletedToday}
             />
           </div>
         )}

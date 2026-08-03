@@ -1,87 +1,83 @@
 # 💥 Tekakonik (Ketakomik)
 
-**Tekakonik** adalah aplikasi web game tebak kata harian bergenre **Modern Comic** dengan 2 karakter pemandu orisinal:
-- **Kapten Klu**: Detektif superhero pemberi petunjuk **JUJUR** (Warna identitas: Electric Blue `#2B6CFF`).
-- **Bayangan**: Rival trickster pemberi petunjuk **LUCU/MENYESATKAN** (Warna identitas: Magenta `#FF3D81`).
+**Tekakonik** adalah aplikasi web game tebak kata harian bergenre **Modern Comic** yang unik, kompetitif, dan aman. Menghadirkan 2 karakter pemandu orisinal:
+- **Kapten Klu**: Detektif superhero pemberi petunjuk **JUJUR 100%** (Electric Blue `#2B6CFF`).
+- **Bayangan**: Rival trickster pemberi petunjuk **TRICKSTER & LUCU** (Magenta `#FF3D81`).
 
 ---
 
 ## 🎨 Visual Identity & Tech Stack
 
-- **Framework**: Next.js 15+ (App Router, Server Actions, TypeScript strict mode)
-- **Styling**: Tailwind CSS v4 (`@theme`, custom comic borders, halftone patterns, sticker shadows)
-- **Fonts**: `Bangers` / `Archivo Black` (Judul & Display), `Plus Jakarta Sans` (Body text)
-- **Database & Auth**: Prisma ORM + PostgreSQL (Neon) & NextAuth v5 (Credential + Google OAuth + Anonymous Guest session)
-- **Animations**: Framer Motion (3D Card Flip, Comic Shake, Burst Pop)
-- **Media & Charts**: Vercel Blob (Comic Panels) & Recharts (Dashboard Analytics)
-- **Export**: `html-to-image` untuk menyimpan panel komik hasil tebakan & WhatsApp Share (`wa.me`)
+### Frontend & UI Architecture
+- **Framework**: Next.js 15+ (App Router, React 19, Server Components & Server Actions)
+- **Styling Engine**: Tailwind CSS v4 (`@theme`, custom comic borders, halftone patterns, sticker shadows)
+- **Design Language**: Modern Comic Style (Thick 3px ink borders, hard offset shadows, zero AI-slop)
+- **Typography**: `Bangers` / `Archivo Black` (Judul & Display), `Plus Jakarta Sans` (Body text)
+- **Animations**: Framer Motion (3D Card Flip, Comic Shake, Burst Pop, 3D Floating Emojis, Auto-Filling Wordle Grid Simulation)
+- **Charts & Media**: Recharts (Admin Analytics) & Vercel Blob (Unlockable Comic Chapter Panels)
+- **Sharing & Image Export**: `html-to-image` untuk mengunduh panel komik hasil tebakan & WhatsApp Share (`wa.me`)
+
+### Backend, Database & Security
+- **Database**: PostgreSQL (Hosted on Neon.tech)
+- **ORM & Driver**: Prisma ORM v7 dengan `@prisma/adapter-pg` driver pooler
+- **Authentication**: NextAuth v5 (Google OAuth + Credentials + Anonymous Guest Storage)
+- **Password Security**: `bcryptjs` (salt rounds 10, no plaintext passwords)
+- **Middleware Security**: Strict NextAuth JWT Middleware (`secureCookie: true`)
 
 ---
 
-## 🎮 Gameplay Features
+## 🔒 Arsitektur Keamanan (Anti-Hacker & Security Audit)
 
-1. **Tebak Kata Harian**: 6 kesempatan tebak kata (4–8 huruf) dengan masukan status warna (Hijau = Benar, Kuning = Misplaced, Abu = Tidak Ada).
-2. **Dual Clue System**: Minta bantuan Kapten Klu (jujur) atau Bayangan (trik) menggunakan currency **Tinta**.
-3. **Mode Dengar (Hardcore Voice)**: Sembunyikan teks clue dan putar ucapan karakter via **Web Speech API** (`SpeechSynthesisUtterance`) lengkap dengan fallback teks untuk iOS Safari.
-4. **Story Chapter Mingguan**: Kumpulkan progres 5-7 kata per chapter untuk membuka *Comic Panel Reveal* rilis cerita orisinal.
-5. **Mode Duel Asinkron**: Buat kode room 6 karakter untuk menantang teman dan bandingkan hasil dalam 2 Panel Komik Bersebelahan.
-6. **Papan Peringkat (Leaderboard)**: Filter Mode Normal vs Mode Dengar (Harian, Mingguan, Sepanjang Masa).
-7. **Usulkan Kata Komunitas**: Pengguna bisa mengirim usulan kata untuk ditinjau oleh Admin.
-8. **Admin Panel Complete**:
-   - `/admin/words` — Manage Words & jadwal rilis.
-   - `/admin/chapters` — Manage Chapters & Upload komik unlock via Vercel Blob.
-   - `/admin/analytics` — Dashboard Recharts & Auto-difficulty balancer (`TOO_EASY` / `TOO_HARD`).
-   - `/admin/suggestions` — Moderasi usulan kata komunitas (ACC / Tolak).
-   - `/admin/announcements` — Manage banner pengumuman aktif.
-   - `/admin/flags` — Toggle Feature Flags.
+1. **Zero Text Leak (Evaluasi Server-Side)**:
+   - String `Word.text` **TIDAK PERNAH** dikirimkan ke client/browser sebelum pemain menyelesaikan tebakan hari itu.
+   - Evaluasi huruf (Hijau, Kuning, Abu-abu) 100% dilakukan di server (`/api/game/guess`).
+
+2. **Keamanan Kredensial Database**:
+   - Password di database di-hash secara permanen dengan `bcryptjs`.
+   - File `.env` tidak pernah dikomituskan ke Git (didaftarkan di `.gitignore`).
+
+3. **Perlindungan Admin Panel (`/admin` & `/loginadmin`)**:
+   - Rute `/admin` dan `/api/admin/*` dilindungi middleware yang mengecek role `ADMIN` di JWT token.
+   - Akses non-admin akan menerima `403 Forbidden` tanpa membocorkan struktur internal admin.
+   - Rute login admin rahasia di `/loginadmin` tidak ditampilkan di menu publik.
 
 ---
 
-## 🚀 Getting Started
+## 🎮 Keunikan Gameplay & Sistem Skor Komik (*Comic Score*)
 
-### 1. Clone Repository
+1. **Aturan 1 Soal Per Hari**: Setelah menyelesaikan soal hari ini, soal terkunci dan pemain diarahkan ke **Story Chapters** atau **Mode Duel**.
+2. **Formula Skor Komik (*Comic Score*)**:
+   - Base Skor: **100 Poin**
+   - Penalti Percobaan: **-15 Poin** setiap percobaan tambahan
+   - Penalti Petunjuk: **-10 Poin** jika membuka petunjuk
+   - Bonus Kecepatan: Bonus hingga **+15 Poin** jika selesai di bawah 30 detik
+   - Bonus Mode Dengar: **+25 Poin** untuk Hardcore Voice Mode
+3. **Dual Clue System**: Speech bubble Kapten Klu (jujur) vs Bayangan (trik) menggunakan currency **Tinta**.
+4. **Mode Dengar (Hardcore Voice)**: Pemutaran petunjuk audio via Web Speech API (`SpeechSynthesisUtterance`) dengan fallback teks untuk iOS Safari.
+5. **Mode Duel Asinkron**: Tantang teman menebak kata yang sama via kode room 6 digit dengan tampilan perbandingan 2 Panel Komik Bersebelahan.
+
+---
+
+## 🚀 Instalasi & Memulai Proyek
+
 ```bash
+# 1. Clone repository
 git clone https://github.com/bayy-kim/ketakomik.git
 cd ketakomik
-```
 
-### 2. Install Dependencies
-```bash
+# 2. Install dependencies
 npm install
-```
 
-### 3. Setup Environment Variables (`.env`)
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/tekakomik"
-NEXTAUTH_SECRET="your-nextauth-secret-key"
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-BLOB_READ_WRITE_TOKEN="your-vercel-blob-token"
-```
-
-### 4. Setup Prisma Database
-```bash
+# 3. Jalankan Prisma migration/sync
 npx prisma generate
 npx prisma db push
-```
 
-### 5. Run Development Server
-```bash
+# 4. Jalankan development server
 npm run dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
-
 ---
 
-## 🔒 Security Principles
-
-- Jawaban kata (`Word.text`) **TIDAK PERNAH** dikirim ke client frontend sebelum sesi tebakan selesai.
-- Evaluasi tebakan 100% diproses server-side pada route `/api/game/guess`.
-- Seluruh rute `/admin` & `/api/admin/*` dilindungi middleware berbasis role `ADMIN`.
-
----
-
-## 📜 License
+## 📜 Lisensi
 
 Project ini dilindungi di bawah lisensi [MIT License](LICENSE).

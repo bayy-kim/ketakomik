@@ -1,22 +1,39 @@
+export interface SavedGuessRecord {
+  guesses: string[];
+  feedbacks: ("CORRECT" | "PRESENT" | "ABSENT")[][];
+  won: boolean;
+  completedAt: string;
+  score: number;
+}
+
 export interface LocalGameState {
   tinta: number;
   streak: number;
   mode: "NORMAL" | "HARDCORE_VOICE";
   anonId: string;
-  guessesHistory: Record<string, { guesses: string[]; won: boolean; completedAt: string }>;
+  completedWordIds: string[]; // Store solved word IDs
+  guessesHistory: Record<string, SavedGuessRecord>;
 }
 
-const STORAGE_KEY = "tekakonik_user_state_v1";
+const STORAGE_KEY = "tekakonik_user_state_v2";
 
 export function getLocalGameState(): LocalGameState {
   if (typeof window === "undefined") {
-    return { tinta: 50, streak: 0, mode: "NORMAL", anonId: "guest_init", guessesHistory: {} };
+    return { tinta: 50, streak: 0, mode: "NORMAL", anonId: "guest_init", completedWordIds: [], guessesHistory: {} };
   }
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      return {
+        tinta: parsed.tinta ?? 50,
+        streak: parsed.streak ?? 0,
+        mode: parsed.mode || "NORMAL",
+        anonId: parsed.anonId || `guest_${Math.random().toString(36).substring(2, 9)}`,
+        completedWordIds: parsed.completedWordIds || [],
+        guessesHistory: parsed.guessesHistory || {},
+      };
     }
   } catch (e) {
     console.error("Failed to parse local game state:", e);
@@ -25,10 +42,11 @@ export function getLocalGameState(): LocalGameState {
   // Generate new anonymous ID if none exists
   const newAnonId = `guest_${Math.random().toString(36).substring(2, 9)}`;
   const defaultState: LocalGameState = {
-    tinta: 50, // Initial welcome bonus
+    tinta: 50,
     streak: 0,
     mode: "NORMAL",
     anonId: newAnonId,
+    completedWordIds: [],
     guessesHistory: {},
   };
 

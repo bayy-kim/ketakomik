@@ -7,7 +7,7 @@ export type LetterFeedback = "CORRECT" | "PRESENT" | "ABSENT";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { wordId, guess, attemptNumber, anonId, userId, mode = "NORMAL", durationSeconds = 0 } = body;
+    const { wordId, guess, attemptNumber, anonId, userId, mode = "NORMAL", durationSeconds = 0, cluesUsed = 0 } = body;
 
     if (!wordId || !guess || typeof guess !== "string") {
       return NextResponse.json({ error: "Data tebakan tidak valid" }, { status: 400 });
@@ -39,17 +39,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Evaluate feedback algorithm (Wordle algorithm for duplicate letters handling)
+    // Evaluate feedback algorithm
     const feedback: LetterFeedback[] = new Array(targetWordText.length).fill("ABSENT");
     const targetLetterCounts: Record<string, number> = {};
 
-    // Count available letters in target
     for (let i = 0; i < targetWordText.length; i++) {
       const char = targetWordText[i];
       targetLetterCounts[char] = (targetLetterCounts[char] || 0) + 1;
     }
 
-    // First pass: Find EXACT matches (CORRECT)
+    // Pass 1: EXACT Matches
     for (let i = 0; i < normalizedGuess.length; i++) {
       if (normalizedGuess[i] === targetWordText[i]) {
         feedback[i] = "CORRECT";
@@ -57,7 +56,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Second pass: Find misplaced matches (PRESENT)
+    // Pass 2: MISPLACED Matches
     for (let i = 0; i < normalizedGuess.length; i++) {
       if (feedback[i] !== "CORRECT") {
         const char = normalizedGuess[i];
@@ -71,17 +70,22 @@ export async function POST(request: Request) {
     const isWon = feedback.every((f) => f === "CORRECT");
     const isGameOver = isWon || attemptNumber >= 6;
 
-    // Calculate Tinta reward if won
+    // UNIK TEKAKOMIK COMIC SCORE FORMULA:
+    // Base 100 - (attemptNumber - 1) * 15 - (cluesUsed * 10) + SpeedBonus (up to 15) + HardcoreVoiceBonus (25)
+    let score = 0;
     let tintaEarned = 0;
+
     if (isWon) {
-      // 1st try = 50 tinta, 2nd = 40, 3rd = 30, 4th = 25, 5th = 20, 6th = 15
-      tintaEarned = Math.max(15, 60 - attemptNumber * 10);
-      if (mode === "HARDCORE_VOICE") {
-        tintaEarned += 20; // Bonus for Hardcore Voice Mode
-      }
+      const baseScore = Math.max(25, 100 - (attemptNumber - 1) * 15);
+      const cluePenalty = cluesUsed * 10;
+      const speedBonus = durationSeconds > 0 && durationSeconds < 30 ? Math.max(0, 30 - durationSeconds) : 0;
+      const voiceBonus = mode === "HARDCORE_VOICE" ? 25 : 0;
+
+      score = Math.max(10, baseScore - cluePenalty + speedBonus + voiceBonus);
+      tintaEarned = Math.max(15, 60 - attemptNumber * 8) + (mode === "HARDCORE_VOICE" ? 20 : 0);
     }
 
-    // Save GameSession if completed or Prisma exists
+    // Save GameSession if completed
     try {
       if (isGameOver) {
         await db.gameSession.create({
@@ -89,7 +93,7 @@ export async function POST(request: Request) {
             wordId: wordDb?.id || wordId,
             userId: userId || null,
             anonId: anonId || "guest",
-            guesses: [{ guess: normalizedGuess, feedback }],
+            guesses: [{ guess: normalizedGuess, feedback, score }],
             attemptsUsed: attemptNumber,
             won: isWon,
             mode: mode === "HARDCORE_VOICE" ? "HARDCORE_VOICE" : "NORMAL",
@@ -108,21 +112,22 @@ export async function POST(request: Request) {
         }
       }
     } catch {
-      // DB log fallback ignoring for standalone preview
+      // DB fallback
     }
 
-    // Return targetWord ONLY when game is solved/failed
     const responsePayload: {
       feedback: LetterFeedback[];
       isWon: boolean;
       isGameOver: boolean;
       tintaEarned: number;
+      score: number;
       targetWord?: string;
     } = {
       feedback,
       isWon,
       isGameOver,
       tintaEarned,
+      score,
     };
 
     if (isGameOver) {
