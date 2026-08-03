@@ -2,33 +2,45 @@
 
 import { useState } from "react";
 import { Header } from "@/components/Header";
-import { User, Lock, LogIn, ShieldAlert } from "lucide-react";
+import { Footer } from "@/components/Footer";
+import { User, Lock, LogIn, Mail, UserPlus, ShieldAlert, Sparkles } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+export default function AuthPage() {
+  const [tab, setTab] = useState<"login" | "register">("login");
+  
+  // Login form state
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  
+  // Register form state
+  const [regUsername, setRegUsername] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
+    setSuccessMsg("");
 
     try {
       const res = await signIn("credentials", {
-        username,
-        password,
+        username: loginUsername,
+        password: loginPassword,
         redirect: false,
       });
 
       if (res?.error) {
         setErrorMsg("Username atau password salah!");
       } else {
-        router.push("/admin");
+        router.push("/play");
       }
     } catch (err) {
       console.error(err);
@@ -38,8 +50,43 @@ export default function LoginPage() {
     }
   };
 
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: regUsername,
+          email: regEmail,
+          password: regPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Gagal mendaftarkan akun");
+        return;
+      }
+
+      setSuccessMsg("Pendaftaran berhasil! Bonus +100 Tinta telah diberikan. Silakan masuk sekarang.");
+      setTab("login");
+      setLoginUsername(regUsername);
+      setRegPassword("");
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Koneksi bermasalah saat mendaftar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/" });
+    signIn("google", { callbackUrl: "/play" });
   };
 
   return (
@@ -48,17 +95,51 @@ export default function LoginPage() {
 
       <main className="flex-1 max-w-md mx-auto w-full px-3 py-8 flex flex-col items-center justify-center">
         <div className="bg-white comic-border p-6 rounded-2xl comic-shadow-lg w-full flex flex-col gap-5">
+          {/* Comic Header Banner */}
           <div className="bg-comic-klu comic-border p-3.5 rounded-xl text-white flex items-center gap-3 rotate-[-1deg]">
             <ShieldAlert className="w-8 h-8 text-comic-yellow shrink-0" />
             <div>
-              <h1 className="font-bangers text-2xl sm:text-3xl">LOGIN TEKAKOMIK</h1>
+              <h1 className="font-bangers text-2xl sm:text-3xl">AKUN TEKAKOMIK</h1>
               <p className="text-xs font-sans">
-                Masuk akun untuk menyimpan streak permanen & mengakses Admin Panel.
+                Simpan streak permanen, kumpulkan Tinta, dan ikuti Mode Duel!
               </p>
             </div>
           </div>
 
-          {/* Login dengan Google Button */}
+          {/* Tab Switcher: MASUK vs DAFTAR */}
+          <div className="flex gap-2 bg-gray-100 comic-border-sm p-1 rounded-xl">
+            <button
+              onClick={() => {
+                setTab("login");
+                setErrorMsg("");
+                setSuccessMsg("");
+              }}
+              className={`flex-1 py-2 font-bangers text-base rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                tab === "login"
+                  ? "bg-comic-yellow text-comic-ink comic-border-sm comic-shadow-sm"
+                  : "text-gray-600 hover:text-comic-ink"
+              }`}
+            >
+              <LogIn className="w-4 h-4" /> MASUK AKUN
+            </button>
+
+            <button
+              onClick={() => {
+                setTab("register");
+                setErrorMsg("");
+                setSuccessMsg("");
+              }}
+              className={`flex-1 py-2 font-bangers text-base rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                tab === "register"
+                  ? "bg-comic-bayangan text-white comic-border-sm comic-shadow-sm"
+                  : "text-gray-600 hover:text-comic-ink"
+              }`}
+            >
+              <UserPlus className="w-4 h-4" /> DAFTAR BARU
+            </button>
+          </div>
+
+          {/* Google 1-Click OAuth Login */}
           <button
             onClick={handleGoogleLogin}
             type="button"
@@ -82,60 +163,129 @@ export default function LoginPage() {
                 d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
               />
             </svg>
-            MASUK DENGAN GOOGLE
+            <span>MASUK DENGAN GOOGLE</span>
           </button>
 
           <div className="flex items-center gap-3 my-1">
             <div className="flex-1 h-0.5 bg-comic-ink" />
-            <span className="font-bangers text-sm text-gray-500">ATAU USERNAME</span>
+            <span className="font-bangers text-sm text-gray-500">ATAU PAKAI FORM</span>
             <div className="flex-1 h-0.5 bg-comic-ink" />
           </div>
 
           {errorMsg && (
-            <div className="bg-red-100 comic-border-sm p-2 rounded text-xs font-bold text-red-600">
+            <div className="bg-red-100 comic-border-sm p-2.5 rounded text-xs font-bold text-red-600">
               {errorMsg}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
-                <User className="w-4 h-4" /> USERNAME / EMAIL:
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="admin"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
-              />
+          {successMsg && (
+            <div className="bg-green-100 comic-border-sm p-2.5 rounded text-xs font-bold text-emerald-700">
+              {successMsg}
             </div>
+          )}
 
-            <div className="flex flex-col gap-1">
-              <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
-                <Lock className="w-4 h-4" /> PASSWORD:
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
-              />
-            </div>
+          {/* Form Login */}
+          {tab === "login" ? (
+            <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
+                  <User className="w-4 h-4 text-comic-klu" /> USERNAME / EMAIL:
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="admin"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="comic-btn text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-2.5 mt-2"
-            >
-              <LogIn className="w-4 h-4" /> {loading ? "Memproses..." : "MASUK DENGAN AKUN"}
-            </button>
-          </form>
+              <div className="flex flex-col gap-1">
+                <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
+                  <Lock className="w-4 h-4 text-comic-klu" /> PASSWORD:
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="comic-btn text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-2.5 mt-2"
+              >
+                <LogIn className="w-4 h-4" /> {loading ? "Memproses..." : "MASUK KE TEKAKOMIK"}
+              </button>
+            </form>
+          ) : (
+            /* Form Pendaftaran */
+            <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
+                  <User className="w-4 h-4 text-comic-bayangan" /> USERNAME BARU:
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="DetektifKata"
+                  value={regUsername}
+                  onChange={(e) => setRegUsername(e.target.value)}
+                  className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
+                  <Mail className="w-4 h-4 text-comic-bayangan" /> ALAMAT EMAIL:
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="detektif@example.com"
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="font-bangers text-base text-comic-ink flex items-center gap-1">
+                  <Lock className="w-4 h-4 text-comic-bayangan" /> PASSWORD:
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Minimal 6 Karakter"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
+                />
+              </div>
+
+              <div className="bg-amber-50 comic-border-sm p-2 rounded flex items-center gap-1.5 text-xs text-comic-ink font-bold">
+                <Sparkles className="w-4 h-4 text-comic-yellow fill-comic-yellow shrink-0" />
+                <span>Bonus Pendaftaran: +100 Tinta Gratis!</span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="comic-btn text-base bg-comic-bayangan hover:bg-pink-600 text-white w-full py-2.5 mt-1"
+              >
+                <UserPlus className="w-4 h-4" /> {loading ? "Mendaftarkan..." : "BUAT AKUN BARU"}
+              </button>
+            </form>
+          )}
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

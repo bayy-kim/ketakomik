@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Flame, Droplet, Volume2, VolumeX, BookOpen, Swords, Trophy, Sparkles, ShieldAlert, Info } from "lucide-react";
+import { Flame, Droplet, Volume2, VolumeX, BookOpen, Swords, Trophy, Sparkles, ShieldAlert, Play, User } from "lucide-react";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
 
 interface HeaderProps {
@@ -90,15 +90,15 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
           </div>
         </div>
 
-        {/* Quick Nav Links (Touch target min 44x44px for accessibility) */}
+        {/* Quick Nav Links */}
         <nav className="w-full sm:w-auto flex items-center justify-around sm:justify-end gap-1 sm:gap-2 pt-1 sm:pt-0 border-t-2 sm:border-t-0 border-gray-200">
           <Link
-            href="/about"
-            className="flex-1 sm:flex-initial min-h-[38px] px-2.5 py-1 bg-white comic-border-sm rounded hover:bg-purple-100 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-purple-700"
-            title="Tentang & FAQ"
+            href="/play"
+            className="flex-1 sm:flex-initial min-h-[38px] px-3 py-1 bg-comic-yellow comic-border-sm rounded hover:bg-yellow-400 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-comic-ink"
+            title="Arena Game"
           >
-            <Info className="w-3.5 h-3.5 text-purple-700" />
-            <span className="sm:hidden">INFO</span>
+            <Play className="w-3.5 h-3.5 fill-comic-ink" />
+            <span>MAIN</span>
           </Link>
           <Link
             href="/chapter"
@@ -131,6 +131,14 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span className="sm:hidden">USUL</span>
+          </Link>
+          <Link
+            href="/auth/login"
+            className="flex-1 sm:flex-initial min-h-[38px] px-2.5 py-1 bg-gray-100 comic-border-sm rounded hover:bg-gray-200 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-comic-ink"
+            title="Login / Akun"
+          >
+            <User className="w-3.5 h-3.5 text-comic-ink" />
+            <span className="sm:hidden">AKUN</span>
           </Link>
           <Link
             href="/admin"

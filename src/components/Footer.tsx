@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Swords, Trophy, Sparkles, ShieldAlert, Heart } from "lucide-react";
+import { BookOpen, Swords, Trophy, Sparkles, Heart, Play, LogIn } from "lucide-react";
 
 export function Footer() {
   return (
@@ -22,13 +22,11 @@ export function Footer() {
           {/* Quick Icon Links */}
           <div className="md:col-span-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Link
-              href="/"
+              href="/play"
               className="bg-comic-paper comic-border p-2.5 rounded-lg flex items-center gap-2 hover:bg-yellow-100 transition-colors comic-shadow-sm"
             >
-              <div className="w-7 h-7 rounded-full bg-comic-yellow comic-border-sm flex items-center justify-center font-bangers text-sm text-comic-ink">
-                🎮
-              </div>
-              <span className="font-bangers text-sm text-comic-ink">Game Harian</span>
+              <Play className="w-5 h-5 fill-comic-ink" />
+              <span className="font-bangers text-sm text-comic-ink">Arena Main</span>
             </Link>
 
             <Link
@@ -64,13 +62,11 @@ export function Footer() {
             </Link>
 
             <Link
-              href="/about"
+              href="/auth/login"
               className="bg-comic-paper comic-border p-2.5 rounded-lg flex items-center gap-2 hover:bg-purple-100 transition-colors comic-shadow-sm"
             >
-              <div className="w-7 h-7 rounded-full bg-purple-500 comic-border-sm flex items-center justify-center font-bangers text-xs text-white">
-                ℹ️
-              </div>
-              <span className="font-bangers text-sm text-purple-700">Tentang FAQ</span>
+              <LogIn className="w-5 h-5 text-purple-700" />
+              <span className="font-bangers text-sm text-purple-700">Login / Daftar</span>
             </Link>
           </div>
         </div>
