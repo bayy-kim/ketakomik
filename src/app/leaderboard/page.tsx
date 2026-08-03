@@ -102,7 +102,23 @@ export default function LeaderboardPage() {
         {/* Leaderboard Table / Cards */}
         <div className="bg-white comic-border rounded-xl comic-shadow overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center font-bangers text-2xl text-comic-ink">MEMUAT PERINGKAT DETEKTIF...</div>
+            <div className="p-8 text-center font-bangers text-2xl text-comic-ink animate-pulse">
+              MEMUAT PERINGKAT DETEKTIF...
+            </div>
+          ) : leaderboard.length === 0 ? (
+            <div className="p-10 flex flex-col items-center text-center gap-3">
+              <span className="text-5xl">🏆</span>
+              <p className="font-bangers text-2xl text-comic-ink">BELUM ADA LAPORAN DETEKTIF!</p>
+              <p className="text-xs font-sans text-gray-600 max-w-xs">
+                Jadilah yang pertama memecahkan teka-teki hari ini dan catatkan namamu di papan peringkat Tekakomik!
+              </p>
+              <a
+                href="/play"
+                className="mt-2 comic-btn bg-comic-yellow text-comic-ink text-sm"
+              >
+                🕵️ MULAI BERMAIN SEKARANG
+              </a>
+            </div>
           ) : (
             <div className="flex flex-col divide-y-2 divide-comic-ink">
               {leaderboard.map((item) => (

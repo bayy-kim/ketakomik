@@ -104,7 +104,7 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
         </div>
 
         {/* Navigation Bar */}
-        <nav className="w-full sm:w-auto flex items-center justify-around sm:justify-end gap-1.5 sm:gap-2 pt-1.5 sm:pt-0 border-t-2 sm:border-t-0 border-gray-200">
+        <nav className="hidden sm:flex w-full sm:w-auto items-center justify-around sm:justify-end gap-1.5 sm:gap-2 pt-1.5 sm:pt-0 border-t-2 sm:border-t-0 border-gray-200">
           <Link
             href="/play"
             onClick={alertLoginRequired}

@@ -36,14 +36,7 @@ export async function GET(request: Request) {
     }
 
     if (!sessions || sessions.length === 0) {
-      const mockLeaderboard = [
-        { rank: 1, name: "Kapten_Fans_#1", score: 125, attempts: 1, duration: 18, mode, badge: "🦸‍♂️ Top Detective", streak: 12 },
-        { rank: 2, name: "DetektifKata99", score: 105, attempts: 2, duration: 24, mode, badge: "🔍 Master Decipher", streak: 8 },
-        { rank: 3, name: "BayanganHunter", score: 95, attempts: 2, duration: 32, mode, badge: "⚡ Comic Hero", streak: 5 },
-        { rank: 4, name: "SiSuperPenebak", score: 75, attempts: 3, duration: 40, mode, badge: "💥 Sleuth", streak: 3 },
-        { rank: 5, name: "MasterKomik", score: 65, attempts: 3, duration: 52, mode, badge: "💥 Sleuth", streak: 4 },
-      ];
-      return NextResponse.json({ leaderboard: mockLeaderboard, mode, period });
+      return NextResponse.json({ leaderboard: [], mode, period, isEmpty: true });
     }
 
     const leaderboard = sessions.map((s, idx) => {

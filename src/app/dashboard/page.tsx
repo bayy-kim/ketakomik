@@ -18,6 +18,9 @@ import {
   X,
   Check,
   ShieldCheck,
+  BookOpen,
+  Swords,
+  MessageSquarePlus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
@@ -276,6 +279,48 @@ export default function UserDashboardPage() {
             >
               <LogOut className="w-4 h-4" /> KELUAR
             </button>
+          </div>
+        </div>
+
+        {/* ===== QUICK ACCESS & NAVIGATION SHORTCUTS ===== */}
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow flex flex-col gap-3">
+          <h2 className="font-bangers text-xl text-comic-ink mb-1">🧭 NAVIGASI & AKSES CEPAT</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <Link
+              href="/play"
+              className="comic-box p-3 flex flex-col items-center justify-center text-center gap-1.5 bg-comic-yellow hover:bg-yellow-400 transition-colors"
+            >
+              <Play className="w-5 h-5 text-comic-ink fill-comic-ink" />
+              <span className="font-bangers text-sm text-comic-ink">MAIN GAME</span>
+            </Link>
+            <Link
+              href="/chapter"
+              className="comic-box p-3 flex flex-col items-center justify-center text-center gap-1.5 bg-blue-50 hover:bg-blue-100 transition-colors"
+            >
+              <BookOpen className="w-5 h-5 text-comic-klu" />
+              <span className="font-bangers text-sm text-comic-ink">CHAPTERS</span>
+            </Link>
+            <Link
+              href="/duel"
+              className="comic-box p-3 flex flex-col items-center justify-center text-center gap-1.5 bg-pink-50 hover:bg-pink-100 transition-colors"
+            >
+              <Swords className="w-5 h-5 text-comic-bayangan" />
+              <span className="font-bangers text-sm text-comic-ink">MODE DUEL</span>
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="comic-box p-3 flex flex-col items-center justify-center text-center gap-1.5 bg-purple-50 hover:bg-purple-100 transition-colors"
+            >
+              <Trophy className="w-5 h-5 text-purple-600" />
+              <span className="font-bangers text-sm text-comic-ink">PERINGKAT</span>
+            </Link>
+            <Link
+              href="/usul"
+              className="comic-box p-3 flex flex-col items-center justify-center text-center gap-1.5 bg-green-50 hover:bg-green-100 transition-colors col-span-2 sm:col-span-1"
+            >
+              <MessageSquarePlus className="w-5 h-5 text-emerald-600" />
+              <span className="font-bangers text-sm text-comic-ink">USUL KATA</span>
+            </Link>
           </div>
         </div>
 

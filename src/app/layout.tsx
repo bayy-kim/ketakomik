@@ -3,6 +3,7 @@ import { Bangers, Archivo_Black, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SessionProviderWrapper } from "@/components/SessionProviderWrapper";
+import { BottomBar } from "@/components/BottomBar";
 import "./globals.css";
 
 const bangers = Bangers({
@@ -67,9 +68,10 @@ export default function RootLayout({
       lang="id"
       className={`${bangers.variable} ${archivoBlack.variable} ${plusJakartaSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-comic-paper text-comic-ink selection:bg-comic-klu selection:text-white">
+      <body className="min-h-full flex flex-col font-sans bg-comic-paper text-comic-ink selection:bg-comic-klu selection:text-white pb-20 sm:pb-0">
         <SessionProviderWrapper>
           {children}
+          <BottomBar />
         </SessionProviderWrapper>
         <Analytics />
         <SpeedInsights />
