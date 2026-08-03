@@ -4,7 +4,15 @@ import { getToken } from "next-auth/jwt";
 
 export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET });
+  const isHttps = nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
+  
+  // Important: pass secureCookie on HTTPS (Vercel Production) so getToken reads __Secure- cookies
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+    secureCookie: isHttps,
+  });
+
   const isLoggedIn = !!token;
   const userRole = (token as { role?: string })?.role;
 

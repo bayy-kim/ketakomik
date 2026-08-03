@@ -23,28 +23,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const username = credentials.username as string;
         const password = credentials.password as string;
 
-        const user = await db.user.findFirst({
-          where: {
-            OR: [{ username }, { email: username }],
-          },
-        });
+        try {
+          const user = await db.user.findFirst({
+            where: {
+              OR: [{ username }, { email: username }],
+            },
+          });
 
-        if (!user || !user.passwordHash) return null;
+          if (!user || !user.passwordHash) return null;
 
-        const isValid = await bcrypt.compare(password, user.passwordHash);
-        if (!isValid) return null;
+          const isValid = await bcrypt.compare(password, user.passwordHash);
+          if (!isValid) return null;
 
-        return {
-          id: user.id,
-          name: user.username,
-          email: user.email,
-          role: user.role,
-        };
+          return {
+            id: user.id,
+            name: user.username,
+            email: user.email || "",
+            role: user.role,
+          };
+        } catch (e) {
+          console.error("Auth error:", e);
+          return null;
+        }
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.email) {
+        try {
+          // Auto-create or update Google User in Postgres DB
+          const usernameFromEmail = user.email.split("@")[0] + "_" + Math.floor(Math.random() * 1000);
+          const dbUser = await db.user.upsert({
+            where: { email: user.email },
+            update: {},
+            create: {
+              email: user.email,
+              username: user.name ? user.name.replace(/\s+/g, "_") : usernameFromEmail,
+              role: "USER",
+              tinta: 100,
+            },
+          });
+          user.id = dbUser.id;
+          (user as { role?: string }).role = dbUser.role;
+        } catch (e) {
+          console.error("Google sign in upsert error:", e);
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role || "USER";
