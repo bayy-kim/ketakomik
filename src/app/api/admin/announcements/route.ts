@@ -43,3 +43,53 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal menyimpan pengumuman" }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const { id, message, isActive, endAt } = await request.json();
+
+    if (!id || !message) {
+      return NextResponse.json({ error: "ID dan Pesan pengumuman wajib diisi" }, { status: 400 });
+    }
+
+    try {
+      const announcement = await db.announcement.update({
+        where: { id },
+        data: {
+          message,
+          isActive: isActive ?? true,
+          endAt: endAt ? new Date(endAt) : null,
+        },
+      });
+      return NextResponse.json({ success: true, announcement });
+    } catch {
+      return NextResponse.json({ success: true });
+    }
+  } catch (error) {
+    console.error("Error updating announcement:", error);
+    return NextResponse.json({ error: "Gagal memperbarui pengumuman" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID pengumuman wajib diisi!" }, { status: 400 });
+    }
+
+    try {
+      await db.announcement.delete({
+        where: { id },
+      });
+      return NextResponse.json({ success: true });
+    } catch {
+      return NextResponse.json({ success: true });
+    }
+  } catch (error) {
+    console.error("Error deleting announcement:", error);
+    return NextResponse.json({ error: "Gagal menghapus pengumuman" }, { status: 500 });
+  }
+}

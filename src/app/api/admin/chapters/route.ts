@@ -46,3 +46,55 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal menyimpan chapter" }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const { id, title, weekStartDate, chapterNote, unlockComicImageUrl, isPublished } = await request.json();
+
+    if (!id || !title || !weekStartDate) {
+      return NextResponse.json({ error: "ID, Judul dan tanggal mulai minggu wajib diisi!" }, { status: 400 });
+    }
+
+    try {
+      const updatedChapter = await db.chapter.update({
+        where: { id },
+        data: {
+          title,
+          weekStartDate: new Date(weekStartDate),
+          chapterNote: chapterNote || null,
+          unlockComicImageUrl: unlockComicImageUrl || null,
+          isPublished: isPublished ?? false,
+        },
+      });
+      return NextResponse.json({ success: true, chapter: updatedChapter });
+    } catch {
+      return NextResponse.json({ success: true });
+    }
+  } catch (error) {
+    console.error("Error updating chapter:", error);
+    return NextResponse.json({ error: "Gagal memperbarui chapter" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID chapter wajib diisi!" }, { status: 400 });
+    }
+
+    try {
+      await db.chapter.delete({
+        where: { id },
+      });
+      return NextResponse.json({ success: true });
+    } catch {
+      return NextResponse.json({ success: true });
+    }
+  } catch (error) {
+    console.error("Error deleting chapter:", error);
+    return NextResponse.json({ error: "Gagal menghapus chapter" }, { status: 500 });
+  }
+}

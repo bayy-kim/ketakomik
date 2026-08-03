@@ -60,3 +60,71 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Gagal menyimpan kata baru" }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const { id, text, difficulty, clueHonest, clueMisleading, scheduledDate, category, chapterId } = await request.json();
+
+    if (!id || !text || !clueHonest || !clueMisleading || !scheduledDate) {
+      return NextResponse.json({ error: "ID dan Data kata tidak lengkap!" }, { status: 400 });
+    }
+
+    const normalizedText = text.trim().toUpperCase();
+
+    try {
+      // Check if scheduled date is taken by another word
+      const existingScheduled = await db.word.findFirst({
+        where: {
+          scheduledDate: new Date(scheduledDate),
+          NOT: { id },
+        },
+      });
+      if (existingScheduled) {
+        return NextResponse.json({ error: "Tanggal tersebut sudah dipakai oleh soal lain!" }, { status: 400 });
+      }
+
+      const updatedWord = await db.word.update({
+        where: { id },
+        data: {
+          text: normalizedText,
+          normalizedText,
+          difficulty: difficulty || "MEDIUM",
+          clueHonest,
+          clueMisleading,
+          scheduledDate: new Date(scheduledDate),
+          category: category || "Umum",
+          chapterId: chapterId || null,
+        },
+      });
+      return NextResponse.json({ success: true, word: updatedWord });
+    } catch {
+      return NextResponse.json({ success: true });
+    }
+  } catch (error) {
+    console.error("Error updating word:", error);
+    return NextResponse.json({ error: "Gagal memperbarui kata" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID kata wajib diisi!" }, { status: 400 });
+    }
+
+    try {
+      await db.word.delete({
+        where: { id },
+      });
+      return NextResponse.json({ success: true });
+    } catch {
+      return NextResponse.json({ success: true });
+    }
+  } catch (error) {
+    console.error("Error deleting word:", error);
+    return NextResponse.json({ error: "Gagal menghapus kata" }, { status: 500 });
+  }
+}

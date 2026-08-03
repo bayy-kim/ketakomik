@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Image as ImageIcon } from "lucide-react";
+import { Plus, Image as ImageIcon, Edit2, Trash2, X } from "lucide-react";
 
 interface ChapterItem {
   id: string;
@@ -19,6 +19,7 @@ export default function AdminChaptersPage() {
   const [unlockComicImageUrl, setUnlockComicImageUrl] = useState("");
   const [weekStartDate, setWeekStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [isPublished, setIsPublished] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,7 +63,7 @@ export default function AdminChaptersPage() {
     }
   };
 
-  const handleAddChapter = async (e: React.FormEvent) => {
+  const handleSaveChapter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !weekStartDate) {
       setErrorMsg("Judul dan tanggal rilis wajib diisi!");
@@ -74,34 +75,86 @@ export default function AdminChaptersPage() {
     setSuccessMsg("");
 
     try {
+      const method = editingId ? "PUT" : "POST";
+      const bodyData = editingId
+        ? {
+            id: editingId,
+            title: title.trim(),
+            chapterNote: chapterNote.trim(),
+            unlockComicImageUrl: unlockComicImageUrl.trim(),
+            weekStartDate,
+            isPublished,
+          }
+        : {
+            title: title.trim(),
+            chapterNote: chapterNote.trim(),
+            unlockComicImageUrl: unlockComicImageUrl.trim(),
+            weekStartDate,
+            isPublished,
+          };
+
       const res = await fetch("/api/admin/chapters", {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          chapterNote: chapterNote.trim(),
-          unlockComicImageUrl: unlockComicImageUrl.trim(),
-          weekStartDate,
-          isPublished,
-        }),
+        body: JSON.stringify(bodyData),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error || "Gagal membuat chapter");
+        setErrorMsg(data.error || "Gagal menyimpan chapter");
         return;
       }
 
-      setSuccessMsg("Chapter berhasil dibuat!");
+      setSuccessMsg(editingId ? "Chapter berhasil diperbarui!" : "Chapter berhasil dibuat!");
       setTitle("");
       setChapterNote("");
       setUnlockComicImageUrl("");
+      setIsPublished(true);
+      setEditingId(null);
       loadChapters();
     } catch (err) {
       console.error(err);
       setErrorMsg("Koneksi bermasalah!");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditClick = (ch: ChapterItem) => {
+    setEditingId(ch.id);
+    setTitle(ch.title);
+    setChapterNote(ch.chapterNote || "");
+    setUnlockComicImageUrl(ch.unlockComicImageUrl || "");
+    setWeekStartDate(ch.weekStartDate.split("T")[0]);
+    setIsPublished(ch.isPublished);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setTitle("");
+    setChapterNote("");
+    setUnlockComicImageUrl("");
+    setWeekStartDate(new Date().toISOString().split("T")[0]);
+    setIsPublished(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+  };
+
+  const handleDeleteClick = async (id: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus chapter ini? Hubungan dengan kata (Word) akan diatur menjadi NULL.")) return;
+
+    try {
+      const res = await fetch(`/api/admin/chapters?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        if (editingId === id) {
+          handleCancelEdit();
+        }
+        loadChapters();
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -116,14 +169,24 @@ export default function AdminChaptersPage() {
 
       {/* Form Buat Chapter Baru */}
       <div className="bg-white comic-border p-5 rounded-xl comic-shadow">
-        <h2 className="font-bangers text-xl text-comic-ink mb-3 flex items-center gap-1.5">
-          <Plus className="w-5 h-5 text-comic-bayangan" /> BUAT CHAPTER BARU
+        <h2 className="font-bangers text-xl text-comic-ink mb-3 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Plus className="w-5 h-5 text-comic-bayangan" /> {editingId ? "EDIT CHAPTER" : "BUAT CHAPTER BARU"}
+          </span>
+          {editingId && (
+            <button
+              onClick={handleCancelEdit}
+              className="flex items-center gap-1 text-xs font-sans text-red-500 hover:underline"
+            >
+              <X className="w-4 h-4" /> Batal Edit
+            </button>
+          )}
         </h2>
 
         {errorMsg && <div className="bg-red-100 comic-border-sm p-2 rounded text-xs font-bold text-red-600 mb-3">{errorMsg}</div>}
         {successMsg && <div className="bg-green-100 comic-border-sm p-2 rounded text-xs font-bold text-emerald-700 mb-3">{successMsg}</div>}
 
-        <form onSubmit={handleAddChapter} className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
+        <form onSubmit={handleSaveChapter} className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
           <div className="flex flex-col gap-1 sm:col-span-2">
             <label className="font-bangers text-sm text-comic-ink">JUDUL CHAPTER STORY:</label>
             <input
@@ -195,7 +258,7 @@ export default function AdminChaptersPage() {
             disabled={loading}
             className="comic-btn bg-comic-yellow text-comic-ink sm:col-span-2 py-2.5 mt-1"
           >
-            {loading ? "Menyimpan..." : "SIMPAN CHAPTER"}
+            {loading ? "Menyimpan..." : editingId ? "PERBARUI CHAPTER" : "SIMPAN CHAPTER"}
           </button>
         </form>
       </div>
@@ -204,17 +267,40 @@ export default function AdminChaptersPage() {
       <div className="bg-white comic-border p-5 rounded-xl comic-shadow">
         <h2 className="font-bangers text-xl text-comic-ink mb-3">DAFTAR CHAPTER ({chapters.length})</h2>
         <div className="flex flex-col gap-3">
-          {chapters.map((ch) => (
-            <div key={ch.id} className="comic-border p-3.5 rounded-lg flex items-center justify-between bg-gray-50">
-              <div>
-                <span className="font-bangers text-lg text-comic-ink">{ch.title}</span>
-                <p className="text-xs font-sans text-gray-600 italic">&ldquo;{ch.chapterNote}&rdquo;</p>
+          {chapters.length === 0 ? (
+            <p className="text-sm text-gray-500 font-sans italic">Belum ada chapter.</p>
+          ) : (
+            chapters.map((ch) => (
+              <div key={ch.id} className="comic-border p-3.5 rounded-lg flex items-center justify-between bg-gray-50">
+                <div>
+                  <span className="font-bangers text-lg text-comic-ink">{ch.title}</span>
+                  <p className="text-xs font-sans text-gray-600 italic">&ldquo;{ch.chapterNote}&rdquo;</p>
+                  <p className="text-[10px] text-gray-500 mt-1 font-sans">Mulai: {ch.weekStartDate.split("T")[0]}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`font-bangers text-sm px-2 py-0.5 rounded comic-border-sm ${ch.isPublished ? "bg-emerald-500 text-white" : "bg-gray-400"}`}>
+                    {ch.isPublished ? "PUBLISHED" : "DRAFT"}
+                  </span>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => handleEditClick(ch)}
+                      className="p-1 hover:bg-gray-200 rounded comic-border-sm"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4 text-blue-600" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(ch.id)}
+                      className="p-1 hover:bg-gray-200 rounded comic-border-sm"
+                      title="Hapus"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <span className={`font-bangers text-sm px-2 py-0.5 rounded comic-border-sm ${ch.isPublished ? "bg-emerald-500 text-white" : "bg-gray-400"}`}>
-                {ch.isPublished ? "PUBLISHED" : "DRAFT"}
-              </span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
