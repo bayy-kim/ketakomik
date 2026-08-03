@@ -5,7 +5,6 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { User, Lock, LogIn, Mail, UserPlus, ShieldAlert, Sparkles } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
@@ -22,7 +21,6 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const router = useRouter();
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +37,14 @@ export default function AuthPage() {
 
       if (res?.error) {
         setErrorMsg("Username atau password salah!");
+        setLoading(false);
       } else {
-        router.push("/play");
+        // Full page redirect to establish cookie and refresh NextAuth session state
+        window.location.href = "/play";
       }
     } catch (err) {
       console.error(err);
       setErrorMsg("Gagal melakukan login");
-    } finally {
       setLoading(false);
     }
   };
@@ -70,17 +69,28 @@ export default function AuthPage() {
       const data = await res.json();
       if (!res.ok) {
         setErrorMsg(data.error || "Gagal mendaftarkan akun");
+        setLoading(false);
         return;
       }
 
-      setSuccessMsg("Pendaftaran berhasil! Bonus +100 Tinta telah diberikan. Silakan masuk sekarang.");
-      setTab("login");
-      setLoginUsername(regUsername);
-      setRegPassword("");
+      // Automatically sign in the newly registered user
+      const loginRes = await signIn("credentials", {
+        username: regUsername,
+        password: regPassword,
+        redirect: false,
+      });
+
+      if (!loginRes?.error) {
+        window.location.href = "/play";
+      } else {
+        setSuccessMsg("Pendaftaran berhasil! Silakan masuk dengan akun baru Anda.");
+        setTab("login");
+        setLoginUsername(regUsername);
+        setLoading(false);
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg("Koneksi bermasalah saat mendaftar");
-    } finally {
       setLoading(false);
     }
   };
