@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Flame, Droplet, Volume2, VolumeX, BookOpen, Swords, Trophy, Sparkles, User, LogIn, UserPlus, Lock, Play } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import { Flame, Droplet, Volume2, VolumeX, BookOpen, Swords, Trophy, Sparkles, User, LogIn, Lock, Play, LayoutDashboard } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
 
 interface HeaderProps {
@@ -175,14 +175,14 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
           </Link>
 
           {isLoggedIn ? (
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="flex-1 sm:flex-initial min-h-[40px] px-2.5 py-1.5 bg-gray-100 comic-border-sm rounded-md hover:bg-red-100 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-red-600"
-              title="Keluar Akun"
+            <Link
+              href="/dashboard"
+              className="flex-1 sm:flex-initial min-h-[40px] px-3 py-1.5 bg-comic-klu comic-border-sm rounded-md hover:bg-blue-600 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-white"
+              title="Dashboard & Profil Saya"
             >
-              <User className="w-3.5 h-3.5 text-red-600" />
-              <span>KELUAR</span>
-            </button>
+              <LayoutDashboard className="w-3.5 h-3.5 text-white" />
+              <span>DASHBOARD</span>
+            </Link>
           ) : (
             <Link
               href="/auth/login"

@@ -47,10 +47,22 @@ model User {
   createdAt     DateTime @default(now())
 
   gameSessions        GameSession[]
-  wordSuggestions    WordSuggestion[] @relation("SubmittedSuggestions")
-  reviewedSuggestions WordSuggestion[] @relation("ReviewedSuggestions")
+  wordSuggestions     WordSuggestion[]  @relation("SubmittedSuggestions")
+  reviewedSuggestions WordSuggestion[]  @relation("ReviewedSuggestions")
+  achievements        UserAchievement[]
 
   @@map("users")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  claimedAt     DateTime @default(now())
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
 }
 
 model PasswordResetToken {
