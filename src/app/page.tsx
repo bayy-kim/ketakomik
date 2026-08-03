@@ -20,7 +20,6 @@ import {
   MinusCircle,
   Flame,
   Droplet,
-  Play,
   Lock,
 } from "lucide-react";
 
@@ -81,13 +80,13 @@ export default function LandingPage() {
       <Header />
 
       <main className="flex-1 flex flex-col">
-        {/* ===== HERO SECTION WITH SIMULATED WORDLE BACKGROUND & GLASSMORPHISM ===== */}
+        {/* ===== HERO SECTION WITH SIMULATED WORDLE BACKGROUND & MULTI-LAYER GLASSMORPHISM ===== */}
         <section className="relative bg-white border-b-4 border-comic-ink overflow-hidden py-12 sm:py-20">
-          {/* Halftone Dot Pattern */}
-          <div className="absolute inset-0 bg-halftone-dots opacity-10 pointer-events-none" />
+          {/* LAYER 1: Halftone Pattern + Animated Simulation Grid Background */}
+          <div className="absolute inset-0 bg-halftone-dots opacity-15 pointer-events-none" />
 
-          {/* BACKGROUND ANIMATED WORD-FILLING GRID SIMULATION */}
-          <div className="absolute inset-0 flex items-center justify-between px-4 sm:px-16 pointer-events-none opacity-35 select-none overflow-hidden">
+          {/* BACKGROUND ANIMATED WORD-FILLING GRID SIMULATION (LAYER 1) */}
+          <div className="absolute inset-0 flex items-center justify-between px-4 sm:px-16 pointer-events-none opacity-40 select-none overflow-hidden">
             {/* Left Simulated Gameboard Stack */}
             <div className="flex flex-col gap-3 scale-90 sm:scale-100 rotate-[-6deg] translate-x-[-10%]">
               {ANIMATED_SIMULATION_WORDS.map((row, rIdx) => {
@@ -156,7 +155,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* 3D Animated Floating Emojis Background Decor */}
+          {/* 3D Animated Floating Emojis (LAYER 1) */}
           <motion.div
             className="absolute top-8 left-6 sm:left-24 text-4xl sm:text-6xl select-none pointer-events-none drop-shadow-[4px_4px_0_#16161A] z-20"
             animate={{
@@ -201,11 +200,14 @@ export default function LandingPage() {
             🏆
           </motion.div>
 
-          {/* HERO CONTENT WRAPPED IN GLASSMORPHISM BLUR CONTAINER */}
+          {/* LAYER 2: MAIN GLASSMORPHISM BLUR CONTAINER (Modern Comic Glass) */}
           <div className="max-w-4xl mx-auto px-4 relative z-20">
-            <div className="backdrop-blur-md bg-white/80 border-4 border-comic-ink rounded-3xl comic-shadow-lg p-6 sm:p-10 flex flex-col items-center text-center gap-6">
-              {/* Eyebrow badge */}
-              <div className="bg-comic-bayangan comic-border px-4 py-1 rounded-full comic-shadow-sm rotate-[-1deg] flex items-center gap-1.5">
+            <div className="backdrop-blur-xl bg-white/75 border-4 border-comic-ink rounded-3xl comic-shadow-lg p-6 sm:p-10 flex flex-col items-center text-center gap-6 shadow-[8px_8px_0_#16161A]">
+              
+              {/* LAYER 3: INNER ELEMENTS WITH INDIVIDUAL COMIC GLASSMORPHISM EFFECTS */}
+              
+              {/* Layer 3 Glass Badge */}
+              <div className="backdrop-blur-md bg-comic-bayangan/90 comic-border px-4 py-1.5 rounded-full comic-shadow-sm rotate-[-1deg] flex items-center gap-1.5">
                 <motion.span
                   animate={{ rotate: [0, 20, -20, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -218,9 +220,9 @@ export default function LandingPage() {
                 </span>
               </div>
 
-              {/* Main Title */}
+              {/* Layer 3 Title Glass Banner */}
               <div className="flex flex-col items-center gap-2">
-                <div className="bg-comic-yellow comic-border px-6 py-2.5 rounded-2xl comic-shadow rotate-[-2deg]">
+                <div className="backdrop-blur-md bg-comic-yellow/90 comic-border px-6 py-2.5 rounded-2xl comic-shadow rotate-[-2deg]">
                   <h1 className="font-bangers text-4xl sm:text-6xl lg:text-7xl text-comic-ink tracking-wider leading-none">
                     TEKAKOMIK
                   </h1>
@@ -231,16 +233,16 @@ export default function LandingPage() {
               </div>
 
               {/* Sub-description */}
-              <p className="font-sans text-sm sm:text-base lg:text-lg text-gray-800 max-w-xl leading-relaxed">
+              <p className="font-sans text-sm sm:text-base lg:text-lg text-gray-900 max-w-xl leading-relaxed font-medium">
                 Dampingi <strong className="text-comic-klu">Kapten Klu</strong> dengan petunjuk 100% jujur, dan waspadai trik lucu dari <strong className="text-comic-bayangan">Bayangan</strong>! Tebak kata rahasia setiap hari dan kumpulkan Tinta!
               </p>
 
-              {/* 3D Animated Character Cards */}
+              {/* Layer 3 3D Character Glass Cards */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-lg my-1">
-                {/* Kapten Klu */}
+                {/* Kapten Klu Comic Glass Card */}
                 <motion.div
-                  whileHover={{ scale: 1.03, rotate: -1 }}
-                  className="bg-blue-50/90 comic-border p-3.5 rounded-xl comic-shadow-klu flex items-center gap-3 w-full sm:w-64"
+                  whileHover={{ scale: 1.04, rotate: -1 }}
+                  className="backdrop-blur-lg bg-blue-50/85 comic-border p-3.5 rounded-xl comic-shadow-klu flex items-center gap-3 w-full sm:w-64"
                 >
                   <motion.div
                     animate={{ y: [0, -6, 0] }}
@@ -251,7 +253,7 @@ export default function LandingPage() {
                   </motion.div>
                   <div className="text-left">
                     <p className="font-bangers text-lg text-comic-klu leading-none">Kapten Klu</p>
-                    <p className="text-xs font-sans text-gray-600 mt-0.5">Petunjuk Jujur 100%</p>
+                    <p className="text-xs font-sans text-gray-700 font-bold mt-0.5">Petunjuk Jujur 100%</p>
                   </div>
                 </motion.div>
 
@@ -263,10 +265,10 @@ export default function LandingPage() {
                   VS
                 </motion.span>
 
-                {/* Bayangan */}
+                {/* Bayangan Comic Glass Card */}
                 <motion.div
-                  whileHover={{ scale: 1.03, rotate: 1 }}
-                  className="bg-pink-50/90 comic-border p-3.5 rounded-xl comic-shadow-bayangan flex items-center gap-3 w-full sm:w-64"
+                  whileHover={{ scale: 1.04, rotate: 1 }}
+                  className="backdrop-blur-lg bg-pink-50/85 comic-border p-3.5 rounded-xl comic-shadow-bayangan flex items-center gap-3 w-full sm:w-64"
                 >
                   <motion.div
                     animate={{ y: [0, 6, 0] }}
@@ -277,23 +279,23 @@ export default function LandingPage() {
                   </motion.div>
                   <div className="text-left">
                     <p className="font-bangers text-xl text-comic-bayangan leading-none">Bayangan</p>
-                    <p className="text-xs font-sans text-gray-600 mt-0.5">Petunjuk Trik & Lucu 😈</p>
+                    <p className="text-xs font-sans text-gray-700 font-bold mt-0.5">Petunjuk Trik & Lucu 😈</p>
                   </div>
                 </motion.div>
               </div>
 
-              {/* Login & Join CTA Buttons */}
+              {/* Layer 3 Glass CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-2">
                 <Link
                   href="/auth/login"
-                  className="comic-btn text-base sm:text-lg bg-comic-yellow hover:bg-yellow-400 text-comic-ink flex-1 py-3.5"
+                  className="comic-btn text-base sm:text-lg bg-comic-yellow/95 hover:bg-yellow-400 text-comic-ink flex-1 py-3.5 backdrop-blur-sm"
                 >
                   <UserPlus className="w-5 h-5" />
                   MASUK / DAFTAR SEKARANG
                 </Link>
                 <button
                   onClick={() => signIn("google", { callbackUrl: "/play" })}
-                  className="comic-btn text-base bg-white hover:bg-gray-100 text-comic-ink flex-1 py-3.5"
+                  className="comic-btn text-base bg-white/95 hover:bg-gray-100 text-comic-ink flex-1 py-3.5 backdrop-blur-sm"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
@@ -305,9 +307,9 @@ export default function LandingPage() {
                 </button>
               </div>
 
-              <p className="text-xs font-sans text-gray-600 flex items-center justify-center gap-1 font-bold">
+              <div className="backdrop-blur-sm bg-amber-100/80 comic-border-sm px-3 py-1.5 rounded-lg text-xs font-sans text-gray-800 flex items-center justify-center gap-1 font-bold">
                 <Lock className="w-3.5 h-3.5 text-red-600 inline" /> Wajib login terlebih dahulu untuk mengakses arena tebak kata & menyimpan progress.
-              </p>
+              </div>
             </div>
           </div>
         </section>
