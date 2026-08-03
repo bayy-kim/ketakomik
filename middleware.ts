@@ -6,7 +6,6 @@ export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const isHttps = nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
   
-  // Important: pass secureCookie on HTTPS (Vercel Production) so getToken reads __Secure- cookies
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
@@ -16,14 +15,14 @@ export async function middleware(req: NextRequest) {
   const isLoggedIn = !!token;
   const userRole = (token as { role?: string })?.role;
 
-  const isAdminRoute = nextUrl.pathname.startsWith("/admin") || nextUrl.pathname.startsWith("/api/admin");
+  const isAdminRoute = nextUrl.pathname.startsWith("/dashboardadmin") || nextUrl.pathname.startsWith("/api/admin");
   const isProtectedGameRoute =
     nextUrl.pathname.startsWith("/play") ||
     nextUrl.pathname.startsWith("/chapter") ||
     nextUrl.pathname.startsWith("/duel") ||
     nextUrl.pathname.startsWith("/usul");
 
-  // 1. Strict Admin Route Protection (Hacker / Non-admin Security Isolation)
+  // 1. Strict Admin Route Protection (Only logged-in ADMIN allowed on /dashboardadmin & /api/admin/*)
   if (isAdminRoute) {
     if (!isLoggedIn || userRole !== "ADMIN") {
       if (nextUrl.pathname.startsWith("/api/")) {
@@ -35,12 +34,13 @@ export async function middleware(req: NextRequest) {
 
   // 2. Strict Game Route Protection (Requires Login First)
   if (isProtectedGameRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/auth/login?error=login_required", nextUrl));
+    const callbackUrl = encodeURIComponent(nextUrl.pathname + nextUrl.search);
+    return NextResponse.redirect(new URL(`/auth/login?callbackUrl=${callbackUrl}`, nextUrl));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/play/:path*", "/chapter/:path*", "/duel/:path*", "/usul/:path*"],
+  matcher: ["/dashboardadmin/:path*", "/api/admin/:path*", "/play/:path*", "/chapter/:path*", "/duel/:path*", "/usul/:path*"],
 };

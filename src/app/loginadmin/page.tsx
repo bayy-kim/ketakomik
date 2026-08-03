@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
         setLoading(false);
       } else {
         // Redirect to admin dashboard after successful admin login
-        window.location.href = "/admin";
+        window.location.href = "/dashboardadmin";
       }
     } catch (err) {
       console.error(err);

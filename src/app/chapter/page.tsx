@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
-import { BookOpen, CheckCircle, Lock, Trophy, Sparkles, ArrowRight } from "lucide-react";
+import { Footer } from "@/components/Footer";
+import { BookOpen, CheckCircle, Lock, Sparkles, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { getLocalGameState } from "@/lib/storage";
 
 interface WordItem {
   id: string;
@@ -23,10 +25,15 @@ interface ChapterItem {
 
 export default function ChapterPage() {
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
-  const [completedWordIds, setCompletedWordIds] = useState<string[]>(["w1", "w2"]); // Mock solved
+  const [completedWordIds, setCompletedWordIds] = useState<string[]>([]);
   const [selectedUnlockComic, setSelectedUnlockComic] = useState<string | null>(null);
 
   useEffect(() => {
+    const state = getLocalGameState();
+    if (state.completedWordIds) {
+      setCompletedWordIds(state.completedWordIds);
+    }
+
     async function loadChapters() {
       try {
         const res = await fetch("/api/chapters");
@@ -127,7 +134,7 @@ export default function ChapterPage() {
                           <CheckCircle className="w-4 h-4 text-emerald-600" />
                         ) : (
                           <Link
-                            href={`/?wordId=${word.id}`}
+                            href={`/play?wordId=${word.id}`}
                             className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5"
                           >
                             Mainkan <ArrowRight className="w-3 h-3" />
@@ -174,6 +181,8 @@ export default function ChapterPage() {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 }

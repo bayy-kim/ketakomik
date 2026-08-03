@@ -13,10 +13,12 @@ import {
   CheckCircle2,
   TrendingUp,
   Award,
-  User,
-  ShieldCheck,
   Play,
-  RotateCcw,
+  Edit3,
+  X,
+  Check,
+  ShieldCheck,
+  Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
@@ -47,6 +49,7 @@ interface Achievement {
 interface UserData {
   username: string;
   email: string;
+  avatarSeed?: string;
   tinta: number;
   currentStreak: number;
   longestStreak: number;
@@ -67,6 +70,15 @@ interface DailyData {
   won: number;
 }
 
+const COMIC_AVATARS = [
+  { id: "klu_fan", emoji: "🦸‍♂️", label: "Kapten Klu" },
+  { id: "bayangan_trick", emoji: "🦹‍♀️", label: "Bayangan" },
+  { id: "sleuth_master", emoji: "🔍", label: "Master Sleuth" },
+  { id: "burst_action", emoji: "💥", label: "Burst Hero" },
+  { id: "comic_legend", emoji: "👑", label: "Comic Legend" },
+  { id: "electric_detective", emoji: "⚡", label: "Electric Detective" },
+];
+
 export default function UserDashboardPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -75,6 +87,13 @@ export default function UserDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  
+  // Profile edit states
+  const [editUsername, setEditUsername] = useState("");
+  const [editAvatarSeed, setEditAvatarSeed] = useState("klu_fan");
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
@@ -82,7 +101,11 @@ export default function UserDashboardPage() {
       const res = await fetch("/api/user/dashboard");
       const data = await res.json();
 
-      if (data.user) setUser(data.user);
+      if (data.user) {
+        setUser(data.user);
+        setEditUsername(data.user.username);
+        setEditAvatarSeed(data.user.avatarSeed || "klu_fan");
+      }
       if (data.stats) setStats(data.stats);
       if (data.dailyAnalytics) setDailyAnalytics(data.dailyAnalytics);
       if (data.achievements) setAchievements(data.achievements);
@@ -96,6 +119,39 @@ export default function UserDashboardPage() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editUsername || editUsername.trim().length < 3) {
+      alert("Username minimal 3 karakter!");
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: editUsername.trim(), avatarSeed: editAvatarSeed }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Gagal meng-update profil");
+        return;
+      }
+
+      setToastMsg("✨ Profil Komik berhasil diperbarui!");
+      setTimeout(() => setToastMsg(null), 3000);
+      setShowEditProfileModal(false);
+      fetchDashboardData();
+    } catch (err) {
+      console.error(err);
+      alert("Koneksi bermasalah saat menyimpan profil!");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const handleClaimAchievement = async (achievementId: string, rewardTinta: number) => {
     setClaimingId(achievementId);
@@ -115,7 +171,6 @@ export default function UserDashboardPage() {
       setToastMsg(`🎉 KLAIM BERHASIL! +${rewardTinta} Tinta ditambahkan ke akunmu!`);
       setTimeout(() => setToastMsg(null), 3000);
 
-      // Refresh dashboard state
       fetchDashboardData();
     } catch (e) {
       console.error(e);
@@ -134,6 +189,8 @@ export default function UserDashboardPage() {
     return `${secs}s`;
   };
 
+  const currentAvatarEmoji = COMIC_AVATARS.find((a) => a.id === user?.avatarSeed)?.emoji || "🦸‍♂️";
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
@@ -149,7 +206,7 @@ export default function UserDashboardPage() {
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
       <Header tintaCount={user?.tinta} streakCount={user?.currentStreak} />
 
-      {/* Toast Notification Notification Burst */}
+      {/* Toast Notification Burst */}
       <AnimatePresence>
         {toastMsg && (
           <motion.div
@@ -167,9 +224,9 @@ export default function UserDashboardPage() {
         {/* ===== USER PROFILE HEADER CARD ===== */}
         <div className="bg-white comic-border p-5 rounded-2xl comic-shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
           <div className="flex items-center gap-4 text-center sm:text-left">
-            {/* Avatar Badge */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-comic-yellow comic-border flex items-center justify-center font-bangers text-3xl sm:text-4xl text-comic-ink comic-shadow shrink-0 rotate-[-3deg]">
-              🦸‍♂️
+            {/* Avatar Badge Terbungkus Border Komik */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-comic-yellow comic-border flex items-center justify-center font-bangers text-3xl sm:text-4xl text-comic-ink comic-shadow shrink-0 rotate-[-3deg] select-none">
+              {currentAvatarEmoji}
             </div>
 
             <div className="flex flex-col">
@@ -177,10 +234,17 @@ export default function UserDashboardPage() {
                 <h1 className="font-bangers text-3xl sm:text-4xl text-comic-ink leading-none">
                   {user?.username}
                 </h1>
+                <button
+                  onClick={() => setShowEditProfileModal(true)}
+                  className="p-1.5 bg-gray-100 hover:bg-gray-200 comic-border-sm rounded-md text-comic-ink"
+                  title="Edit Profil Komik"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
                 {user?.role === "ADMIN" && (
-                  <span className="bg-comic-bayangan text-white font-bangers text-xs px-2 py-0.5 rounded comic-border-sm">
-                    ADMIN
-                  </span>
+                  <Link href="/dashboardadmin" className="bg-comic-bayangan text-white font-bangers text-xs px-2 py-0.5 rounded comic-border-sm hover:bg-pink-600 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> ADMIN HUB
+                  </Link>
                 )}
               </div>
               <p className="text-xs font-sans text-gray-600 mt-1">{user?.email || "Detektif Tekakonik"}</p>
@@ -295,7 +359,7 @@ export default function UserDashboardPage() {
                       : "bg-gray-50 opacity-90"
                   }`}
                 >
-                  {/* Badge Gambar Terbungkus Border Komik */}
+                  {/* Badge Gambar Terbungkus Border Komik Tebal */}
                   <div className="flex items-start gap-3">
                     <div
                       className={`w-14 h-14 rounded-xl comic-border flex items-center justify-center text-3xl comic-shadow shrink-0 select-none ${
@@ -353,6 +417,72 @@ export default function UserDashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* ===== MODAL EDIT PROFIL KOMIK ===== */}
+      {showEditProfileModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-comic-paper comic-border p-6 rounded-2xl comic-shadow-lg max-w-md w-full flex flex-col gap-4 animate-in fade-in zoom-in relative">
+            <button
+              onClick={() => setShowEditProfileModal(false)}
+              className="absolute top-4 right-4 p-1 rounded-md comic-border-sm hover:bg-gray-100 text-comic-ink"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="bg-comic-yellow comic-border p-3 rounded-xl flex items-center gap-2">
+              <Edit3 className="w-6 h-6 text-comic-ink" />
+              <h2 className="font-bangers text-2xl text-comic-ink">EDIT PROFIL KOMIK</h2>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="flex flex-col gap-4 text-xs font-sans">
+              <div className="flex flex-col gap-1">
+                <label className="font-bangers text-sm text-comic-ink">USERNAME KOMIK BARU:</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="DetektifSuper99"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  className="bg-white comic-border px-3 py-2 rounded-md font-bangers text-lg text-comic-ink"
+                />
+              </div>
+
+              {/* Pilihan Avatar Komik Terbungkus Border Komik */}
+              <div className="flex flex-col gap-1.5">
+                <label className="font-bangers text-sm text-comic-ink">PILIH AVATAR KOMIK:</label>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {COMIC_AVATARS.map((av) => {
+                    const isSelected = editAvatarSeed === av.id;
+                    return (
+                      <button
+                        key={av.id}
+                        type="button"
+                        onClick={() => setEditAvatarSeed(av.id)}
+                        className={`comic-border p-2 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                          isSelected
+                            ? "bg-comic-yellow comic-shadow-sm scale-105"
+                            : "bg-white hover:bg-gray-50 opacity-80"
+                        }`}
+                      >
+                        <span className="text-3xl select-none">{av.emoji}</span>
+                        <span className="font-bangers text-[11px] text-comic-ink leading-none">{av.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingProfile}
+                className="comic-btn text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-2.5 mt-2"
+              >
+                <Check className="w-4 h-4" /> {savingProfile ? "Menyimpan..." : "SIMPAN PERUBAHAN PROFIL"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ===== MODAL KONFIRMASI LOGOUT KOMIK ===== */}
       {showLogoutModal && (
