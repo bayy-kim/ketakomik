@@ -24,9 +24,9 @@
     font-family: var(--font-archivo);
   }
   
-  /* Modern Comic Borders and Shadows */
+  /* Modern Comic Borders and Hard Offset Shadows */
   .comic-border {
-    border: 3.5px solid #16161A;
+    border: 3px solid #16161A;
   }
   .comic-border-sm {
     border: 2px solid #16161A;
@@ -41,10 +41,10 @@
     box-shadow: 6px 6px 0px #16161A;
   }
   .comic-shadow-klu {
-    box-shadow: 4px 4px 0px #2B6CFF, 4px 4px 0px 3.5px #16161A;
+    box-shadow: 4px 4px 0px #2B6CFF, 4px 4px 0px 3px #16161A;
   }
   .comic-shadow-bayangan {
-    box-shadow: 4px 4px 0px #FF3D81, 4px 4px 0px 3.5px #16161A;
+    box-shadow: 4px 4px 0px #FF3D81, 4px 4px 0px 3px #16161A;
   }
 
   /* Halftone SVG Patterns */
@@ -62,22 +62,22 @@
     background-size: 12px 12px;
   }
 
-  /* Comic Card / Button bases */
+  /* Comic Box & Button Utilities */
   .comic-box {
     background-color: #ffffff;
-    border: 3.5px solid #16161A;
-    border-radius: 6px;
+    border: 3px solid #16161A;
+    border-radius: 8px;
     box-shadow: 4px 4px 0px #16161A;
   }
   .comic-btn {
     background-color: #FFD200;
     color: #16161A;
     font-family: var(--font-bangers);
-    letter-spacing: 0.05em;
-    font-size: 1.25rem;
+    letter-spacing: 0.04em;
+    font-size: 1.125rem;
     padding: 0.5rem 1.25rem;
-    border: 3.5px solid #16161A;
-    border-radius: 6px;
+    border: 3px solid #16161A;
+    border-radius: 8px;
     box-shadow: 4px 4px 0px #16161A;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
     cursor: pointer;
@@ -86,6 +86,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    white-space: nowrap;
   }
   .comic-btn:hover {
     transform: translate(-1px, -1px);

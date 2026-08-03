@@ -40,10 +40,10 @@ export function LetterBox({
     borderColor = "border-comic-ink";
   }
 
-  // Adaptive size based on word length & desktop scaling (lg:w-16 lg:h-16)
+  // Precise non-slop adaptive sizes across mobile (320px–430px) and desktop (lg/xl)
   let sizeClasses = "w-10 h-10 sm:w-13 sm:h-13 lg:w-16 lg:h-16 text-2xl sm:text-3xl lg:text-4xl";
   if (wordLength >= 7) {
-    sizeClasses = "w-8 h-8 sm:w-11 sm:h-11 lg:w-13 lg:h-13 text-lg sm:text-2xl lg:text-3xl";
+    sizeClasses = "w-7.5 h-7.5 sm:w-11 sm:h-11 lg:w-13 lg:h-13 text-lg sm:text-2xl lg:text-3xl";
   } else if (wordLength === 6) {
     sizeClasses = "w-9 h-9 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-xl sm:text-2xl lg:text-3xl";
   }
@@ -58,14 +58,14 @@ export function LetterBox({
       >
         {/* Front Face (Typing / Empty) */}
         <div
-          className={`absolute w-full h-full backface-hidden flex items-center justify-center border-[2.5px] sm:border-[3.5px] ${borderColor} ${bgColor} rounded-md comic-shadow-sm font-bangers text-comic-ink`}
+          className={`absolute w-full h-full backface-hidden flex items-center justify-center border-[2.5px] sm:border-[3px] ${borderColor} ${bgColor} rounded-md comic-shadow-sm font-bangers text-comic-ink`}
         >
           {letter}
         </div>
 
         {/* Back Face (Revealed with Feedback Color) */}
         <div
-          className={`absolute w-full h-full backface-hidden rotate-y-180 flex items-center justify-center border-[2.5px] sm:border-[3.5px] border-comic-ink ${bgColor} rounded-md comic-shadow-sm font-bangers ${textColor}`}
+          className={`absolute w-full h-full backface-hidden rotate-y-180 flex items-center justify-center border-[2.5px] sm:border-[3px] border-comic-ink ${bgColor} rounded-md comic-shadow-sm font-bangers ${textColor}`}
         >
           {letter}
         </div>
