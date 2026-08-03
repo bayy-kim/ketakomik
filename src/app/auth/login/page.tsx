@@ -44,7 +44,7 @@ export default function AuthPage() {
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg("Gagal melakukan login");
+      setErrorMsg("Gagal melakukan Sign In");
       setLoading(false);
     }
   };
@@ -116,7 +116,7 @@ export default function AuthPage() {
             </div>
           </div>
 
-          {/* Tab Switcher: MASUK vs SIGN IN / DAFTAR */}
+          {/* Tab Switcher: SIGN IN vs DAFTAR */}
           <div className="flex gap-2 bg-gray-100 comic-border-sm p-1 rounded-xl">
             <button
               onClick={() => {
@@ -130,7 +130,7 @@ export default function AuthPage() {
                   : "text-gray-600 hover:text-comic-ink"
               }`}
             >
-              <LogIn className="w-4 h-4" /> MASUK AKUN
+              <LogIn className="w-4 h-4" /> SIGN IN
             </button>
 
             <button
@@ -145,7 +145,7 @@ export default function AuthPage() {
                   : "text-gray-600 hover:text-comic-ink"
               }`}
             >
-              <UserPlus className="w-4 h-4" /> SIGN IN / DAFTAR
+              <UserPlus className="w-4 h-4" /> DAFTAR BARU
             </button>
           </div>
 
@@ -230,7 +230,7 @@ export default function AuthPage() {
                 disabled={loading}
                 className="comic-btn text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-2.5 mt-2"
               >
-                <LogIn className="w-4 h-4" /> {loading ? "Memproses..." : "MASUK KE TEKAKOMIK"}
+                <LogIn className="w-4 h-4" /> {loading ? "Memproses..." : "SIGN IN KE TEKAKOMIK"}
               </button>
             </form>
           ) : (
@@ -288,7 +288,7 @@ export default function AuthPage() {
                 disabled={loading}
                 className="comic-btn text-base bg-comic-bayangan hover:bg-pink-600 text-white w-full py-2.5 mt-1"
               >
-                <UserPlus className="w-4 h-4" /> {loading ? "Mendaftarkan..." : "SIGN IN / DAFTAR AKUN BARU"}
+                <UserPlus className="w-4 h-4" /> {loading ? "Mendaftarkan..." : "BUAT AKUN BARU"}
               </button>
             </form>
           )}
