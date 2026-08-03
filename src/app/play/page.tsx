@@ -7,7 +7,6 @@ import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { ClueDualPanel } from "@/components/ClueDualPanel";
 import { ResultShareCard } from "@/components/ResultShareCard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
-import { Footer } from "@/components/Footer";
 import { LetterState } from "@/components/LetterBox";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
 
@@ -321,8 +320,6 @@ function PlayGameContainer() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }
