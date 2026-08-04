@@ -22,11 +22,28 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
   const [mode, setMode] = useState<"NORMAL" | "HARDCORE_VOICE">("NORMAL");
 
   useEffect(() => {
-    const state = getLocalGameState();
-    setTinta(propTinta ?? state.tinta);
-    setStreak(propStreak ?? state.streak);
-    setMode(initialMode ?? state.mode);
-  }, [propTinta, propStreak, initialMode]);
+    async function syncUserStatus() {
+      if (isLoggedIn) {
+        try {
+          const res = await fetch("/api/user/profile");
+          const data = await res.json();
+          if (res.ok && data.tinta !== undefined) {
+            setTinta(data.tinta);
+            setStreak(data.streak);
+            saveLocalGameState({ tinta: data.tinta, streak: data.streak });
+            return;
+          }
+        } catch (e) {
+          console.error("Gagal sinkronisasi tinta user:", e);
+        }
+      }
+      const state = getLocalGameState();
+      setTinta(propTinta ?? state.tinta);
+      setStreak(propStreak ?? state.streak);
+    }
+    syncUserStatus();
+    setMode(initialMode ?? getLocalGameState().mode);
+  }, [isLoggedIn, propTinta, propStreak, initialMode]);
 
   const handleToggleMode = () => {
     const nextMode = mode === "NORMAL" ? "HARDCORE_VOICE" : "NORMAL";

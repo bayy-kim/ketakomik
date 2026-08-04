@@ -71,13 +71,31 @@ function PlayGameContainer() {
 
   // Initialize word and local storage state
   useEffect(() => {
-    const state = getLocalGameState();
-    setTintaCount(state.tinta);
-    setStreakCount(state.streak);
-    setMode(state.mode);
-    setStartTime(Date.now());
+    async function syncAndInit() {
+      const state = getLocalGameState();
+      let activeTinta = state.tinta;
+      let activeStreak = state.streak;
 
-    async function initWord() {
+      // Sync tinta & streak real-time dari database untuk user login
+      if (session?.user?.id) {
+        try {
+          const res = await fetch("/api/user/profile");
+          const data = await res.json();
+          if (res.ok && data.tinta !== undefined) {
+            activeTinta = data.tinta;
+            activeStreak = data.streak;
+            saveLocalGameState({ tinta: data.tinta, streak: data.streak });
+          }
+        } catch (e) {
+          console.error("Gagal sinkron status tinta play:", e);
+        }
+      }
+
+      setTintaCount(activeTinta);
+      setStreakCount(activeStreak);
+      setMode(state.mode);
+      setStartTime(Date.now());
+
       try {
         if (duelRoomCode) {
           setIsDuelMode(true);
@@ -122,8 +140,8 @@ function PlayGameContainer() {
       }
     }
 
-    initWord();
-  }, [duelRoomCode]);
+    syncAndInit();
+  }, [duelRoomCode, session]);
 
   const handleChar = useCallback((char: string) => {
     if (isGameOver || loading || isAlreadyCompletedToday) return;
