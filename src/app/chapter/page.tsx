@@ -7,6 +7,8 @@ import { Footer } from "@/components/Footer";
 import { BookOpen, CheckCircle, Lock, Sparkles, ArrowRight, AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { getLocalGameState } from "@/lib/storage";
+import { useSession } from "next-auth/react";
+import { ComicDailyClaimModal } from "@/components/ComicDailyClaimModal";
 
 interface WordItem {
   id: string;
@@ -25,6 +27,7 @@ interface ChapterItem {
 }
 
 export default function ChapterPage() {
+  const { data: session } = useSession();
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
   const [completedWordIds, setCompletedWordIds] = useState<string[]>([]);
   const [selectedUnlockComic, setSelectedUnlockComic] = useState<string | null>(null);
@@ -60,6 +63,7 @@ export default function ChapterPage() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
+      {session && <ComicDailyClaimModal isLoggedIn={!!session} />}
       <Header />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-3 py-6">

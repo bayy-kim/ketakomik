@@ -23,6 +23,9 @@ export async function GET(request: Request) {
         won: true,
         mode: mode as "NORMAL" | "HARDCORE_VOICE",
         ...(period !== "alltime" ? { completedAt: dateFilter } : {}),
+        user: {
+          isBanned: false, // Jangan tampilkan ke publik jika di-ban admin
+        },
       },
       include: {
         user: { select: { username: true, avatarSeed: true, currentStreak: true } },

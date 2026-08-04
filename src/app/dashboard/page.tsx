@@ -97,11 +97,21 @@ export default function UserDashboardPage() {
   const [editAvatarSeed, setEditAvatarSeed] = useState("klu_fan");
   const [savingProfile, setSavingProfile] = useState(false);
 
+  // Time Filter States
+  const [filterYear, setFilterYear] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterDate, setFilterDate] = useState("");
+
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
     try {
-      const res = await fetch("/api/user/dashboard");
+      const queryParams = new URLSearchParams();
+      if (filterYear) queryParams.append("year", filterYear);
+      if (filterMonth) queryParams.append("month", filterMonth);
+      if (filterDate) queryParams.append("date", filterDate);
+
+      const res = await fetch(`/api/user/dashboard?${queryParams.toString()}`);
       const data = await res.json();
 
       if (data.user) {
@@ -121,7 +131,7 @@ export default function UserDashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [filterYear, filterMonth, filterDate]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,8 +298,70 @@ export default function UserDashboardPage() {
 
         {/* ===== QUICK ACCESS & NAVIGATION SHORTCUTS ===== */}
         <div className="bg-white comic-border p-4 sm:p-5 rounded-xl comic-shadow flex flex-col gap-3">
-          <h2 className="font-bangers text-xl text-comic-ink mb-1">🧭 NAVIGASI & AKSES CEPAT</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-gray-150 pb-2">
+            <h2 className="font-bangers text-xl text-comic-ink">🧭 NAVIGASI & AKSES CEPAT</h2>
+            
+            {/* Filter Waktu Bertema Komik */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-sans">
+              <span className="font-bangers text-sm text-comic-ink">FILTER WAKTU:</span>
+              <select
+                value={filterYear}
+                onChange={(e) => {
+                  setFilterYear(e.target.value);
+                  setFilterDate(""); // Reset specific date if choosing year/month
+                }}
+                className="bg-gray-50 comic-border-sm px-2 py-1 rounded font-sans text-xs text-comic-ink outline-none"
+              >
+                <option value="">-- Semua Tahun --</option>
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+              </select>
+
+              <select
+                value={filterMonth}
+                onChange={(e) => {
+                  setFilterMonth(e.target.value);
+                  setFilterDate(""); // Reset specific date if choosing year/month
+                }}
+                className="bg-gray-50 comic-border-sm px-2 py-1 rounded font-sans text-xs text-comic-ink outline-none"
+              >
+                <option value="">-- Semua Bulan --</option>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <option key={i + 1} value={(i + 1).toString()}>
+                    {new Date(2026, i, 1).toLocaleDateString("id-ID", { month: "long" })}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => {
+                  setFilterDate(e.target.value);
+                  if (e.target.value) {
+                    setFilterYear("");
+                    setFilterMonth("");
+                  }
+                }}
+                className="bg-gray-50 comic-border-sm px-2 py-1 rounded font-sans text-xs text-comic-ink outline-none"
+              />
+              
+              {(filterYear || filterMonth || filterDate) && (
+                <button
+                  onClick={() => {
+                    setFilterYear("");
+                    setFilterMonth("");
+                    setFilterDate("");
+                  }}
+                  className="font-bangers text-[10px] bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded comic-border-sm"
+                >
+                  RESET
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-1">
             <Link
               href="/play"
               className="comic-box p-3 flex flex-col items-center justify-center text-center gap-1.5 bg-comic-yellow hover:bg-yellow-400 transition-colors"

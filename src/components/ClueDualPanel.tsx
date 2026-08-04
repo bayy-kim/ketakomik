@@ -31,7 +31,7 @@ export function ClueDualPanel({
   const [showTextFallbackBayangan, setShowTextFallbackBayangan] = useState(false);
 
   const fetchClue = async (char: "klu" | "bayangan" | "both") => {
-    const cost = char === "both" ? 15 : 10;
+    const cost = char === "both" ? 12 : char === "bayangan" ? 5 : 10;
     if (tintaCount < cost) {
       setErrorMsg(`Tinta tidak cukup! Butuh ${cost} Tinta.`);
       return;
@@ -44,7 +44,7 @@ export function ClueDualPanel({
   const executeFetchClue = async () => {
     if (!pendingClueChar) return;
     const char = pendingClueChar;
-    const cost = char === "both" ? 15 : 10;
+    const cost = char === "both" ? 12 : char === "bayangan" ? 5 : 10;
 
     setLoading(true);
     setErrorMsg("");
@@ -103,13 +103,13 @@ export function ClueDualPanel({
 
   const getConfirmationMessage = () => {
     if (pendingClueChar === "both") {
-      return "Apakah kamu yakin ingin menukar 15 Tinta Komik untuk membuka Clue Kapten Klu sekaligus Clue Bayangan?";
+      return "Apakah kamu yakin ingin menukar 12 Tinta Komik untuk membuka Clue Kapten Klu sekaligus Clue Bayangan?";
     }
     if (pendingClueChar === "klu") {
       return "Apakah kamu yakin ingin menukar 10 Tinta Komik untuk membuka Clue Jujur Kapten Klu?";
     }
     if (pendingClueChar === "bayangan") {
-      return "Apakah kamu yakin ingin menukar 10 Tinta Komik untuk membuka Clue Trik Bayangan?";
+      return "Apakah kamu yakin ingin menukar 5 Tinta Komik untuk membuka Clue Trik Bayangan?";
     }
     return "";
   };
@@ -156,14 +156,14 @@ export function ClueDualPanel({
               disabled={loading}
               className="comic-btn text-sm bg-pink-500 hover:bg-pink-600 text-white"
             >
-              <Droplet className="w-4 h-4 fill-white" /> Bayangan (10 Tinta)
+              <Droplet className="w-4 h-4 fill-white" /> Bayangan (5 Tinta)
             </button>
             <button
               onClick={() => fetchClue("both")}
               disabled={loading}
               className="comic-btn text-sm bg-comic-yellow hover:bg-yellow-400 text-comic-ink"
             >
-              <Droplet className="w-4 h-4 fill-comic-ink" /> Buka Dua-duanya (15 Tinta)
+              <Droplet className="w-4 h-4 fill-comic-ink" /> Buka Dua-duanya (12 Tinta)
             </button>
           </div>
         </div>

@@ -137,7 +137,7 @@ export default function LandingPage() {
                   SIGN IN / DAFTAR
                 </Link>
                 <Link
-                  href="/auth/login?provider=google"
+                  href="/auth/login?callbackUrl=/chapter"
                   className="comic-btn text-sm sm:text-base bg-white hover:bg-gray-100 text-comic-ink flex-1 py-3"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { User, Lock, LogIn, Mail, UserPlus, ShieldAlert, Sparkles, HelpCircle } from "lucide-react";
@@ -10,7 +10,7 @@ import Link from "next/link";
 
 function AuthContainer() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/play";
+  const callbackUrl = searchParams.get("callbackUrl") || "/chapter";
 
   const [tab, setTab] = useState<"login" | "register">("login");
   
@@ -27,6 +27,15 @@ function AuthContainer() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Detect error from Google OAuth (banned redirect)
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const reasonParam = searchParams.get("reason");
+    if (errorParam === "Banned") {
+      setErrorMsg(`⛔ AKUN ANDA DIBEKUKAN / BANNED OLEH ADMIN! Alasan: ${reasonParam || "Pelanggaran aturan"}`);
+    }
+  }, [searchParams]);
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -41,7 +50,13 @@ function AuthContainer() {
       });
 
       if (res?.error) {
-        setErrorMsg("Username atau password salah!");
+        // Parse error message (including Banned info)
+        if (res.error.includes("BANNED")) {
+          const cleanErr = res.error.replace("CredentialsSignin: ", "").replace("Read more at https://errors.authjs.dev#credentialssignin", "");
+          setErrorMsg(cleanErr);
+        } else {
+          setErrorMsg("Username atau password salah!");
+        }
         setLoading(false);
       } else {
         window.location.href = callbackUrl;

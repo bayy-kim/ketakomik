@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -10,6 +10,11 @@ export async function GET() {
     if (!userId || !session?.user) {
       return NextResponse.json({ error: "Unauthorized. Silakan login terlebih dahulu." }, { status: 401 });
     }
+
+    const { searchParams } = new URL(request.url);
+    const filterYear = searchParams.get("year");
+    const filterMonth = searchParams.get("month");
+    const filterDate = searchParams.get("date"); // Format: YYYY-MM-DD
 
     let user;
     let gameSessions: {
@@ -21,6 +26,31 @@ export async function GET() {
       mode: string;
     }[] = [];
     let claimedAchievements: { achievementId: string }[] = [];
+
+    // Filter tanggal dinamis untuk query database
+    let dateFilter: { gte?: Date; lte?: Date } = {};
+    if (filterDate) {
+      dateFilter = {
+        gte: new Date(`${filterDate}T00:00:00.000Z`),
+        lte: new Date(`${filterDate}T23:59:59.999Z`),
+      };
+    } else if (filterYear || filterMonth) {
+      const year = filterYear ? parseInt(filterYear) : new Date().getFullYear();
+      if (filterMonth) {
+        const month = parseInt(filterMonth) - 1; // 0-indexed
+        dateFilter = {
+          gte: new Date(year, month, 1),
+          lte: new Date(year, month + 1, 0, 23, 59, 59, 999),
+        };
+      } else {
+        dateFilter = {
+          gte: new Date(year, 0, 1),
+          lte: new Date(year, 11, 31, 23, 59, 59, 999),
+        };
+      }
+    }
+
+    const hasFilter = !!(filterDate || filterYear || filterMonth);
 
     try {
       user = await db.user.findUnique({
@@ -39,7 +69,10 @@ export async function GET() {
       });
 
       gameSessions = await db.gameSession.findMany({
-        where: { userId },
+        where: {
+          userId,
+          ...(hasFilter ? { completedAt: dateFilter } : {}),
+        },
         orderBy: { completedAt: "desc" },
         select: {
           id: true,

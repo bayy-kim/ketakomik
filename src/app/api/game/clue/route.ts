@@ -25,7 +25,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Soal kata tidak ditemukan" }, { status: 404 });
     }
 
-    const clueCost = character === "both" ? 15 : 10;
+    // Kapten Klu = 10 Tinta, Bayangan = 5 Tinta, Kedua-duanya = 12 Tinta
+    const clueCost = character === "both" ? 12 : character === "bayangan" ? 5 : 10;
 
     const user = await db.user.findUnique({
       where: { id: currentUserId },

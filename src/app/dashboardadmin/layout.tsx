@@ -46,6 +46,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <MessageSquarePlus className="w-4 h-4 text-amber-600" /> Usulan Komunitas
           </Link>
           <Link
+            href="/dashboardadmin/users"
+            className="flex items-center gap-2 px-3 py-2 rounded comic-border-sm hover:bg-yellow-100 text-comic-ink shadow-sm"
+          >
+            <ShieldAlert className="w-4 h-4 text-red-500" /> Manajemen Pengguna
+          </Link>
+          <Link
             href="/dashboardadmin/announcements"
             className="flex items-center gap-2 px-3 py-2 rounded comic-border-sm hover:bg-yellow-100 text-comic-ink shadow-sm"
           >

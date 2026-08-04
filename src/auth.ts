@@ -34,6 +34,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           if (!user || !user.passwordHash) return null;
 
+          // Cek suspend status saat login manual
+          if (user.isBanned) {
+            throw new Error(`BANNED: Akun Anda dibekukan oleh Admin. Alasan: ${user.banReason || "Pelanggaran aturan"}`);
+          }
+
           const isValid = await bcrypt.compare(password, user.passwordHash);
           if (!isValid) return null;
 
@@ -54,6 +59,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === "google" && user.email) {
         try {
+          // Periksa apakah user di-banned
+          const existingUser = await db.user.findUnique({
+            where: { email: user.email },
+          });
+
+          if (existingUser?.isBanned) {
+            return `/auth/login?error=Banned&reason=${encodeURIComponent(existingUser.banReason || "Akun ditangguhkan oleh admin")}`;
+          }
+
           // Auto-create or update Google User in Postgres DB
           const usernameFromEmail = user.email.split("@")[0] + "_" + Math.floor(Math.random() * 1000);
           const dbUser = await db.user.upsert({

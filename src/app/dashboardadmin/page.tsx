@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Layers, BarChart3, MessageSquarePlus, Megaphone, Flag, Plus, Check } from "lucide-react";
+import { BookOpen, Layers, BarChart3, MessageSquarePlus, Megaphone, Flag, Plus, Check, ShieldAlert } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const [text, setText] = useState("");
@@ -180,6 +180,14 @@ export default function AdminDashboardPage() {
           <p className="text-xs font-sans text-gray-600">Unggah komik unlock via Vercel Blob, atur minggu rilis.</p>
         </Link>
 
+        <Link href="/dashboardadmin/users" className="comic-box p-4 flex flex-col gap-2 hover:bg-red-50 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="font-bangers text-xl text-comic-ink">MANAJEMEN USER</span>
+            <ShieldAlert className="w-6 h-6 text-red-500" />
+          </div>
+          <p className="text-xs font-sans text-gray-600">Ban / suspend dan atur status blokir akun bermasalah.</p>
+        </Link>
+
         <Link href="/dashboardadmin/analytics" className="comic-box p-4 flex flex-col gap-2 hover:bg-green-50 transition-colors">
           <div className="flex items-center justify-between">
             <span className="font-bangers text-xl text-comic-ink">ANALITIK & RECHARTS</span>
@@ -204,7 +212,7 @@ export default function AdminDashboardPage() {
           <p className="text-xs font-sans text-gray-600">Atur banner berita/event aktif di bagian atas aplikasi.</p>
         </Link>
 
-        <Link href="/dashboardadmin/flags" className="comic-box p-4 flex flex-col gap-2 hover:bg-red-50 transition-colors">
+        <Link href="/dashboardadmin/flags" className="comic-box p-4 flex flex-col gap-2 hover:bg-red-50 transition-colors col-span-1 sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
             <span className="font-bangers text-xl text-comic-ink">FEATURE FLAGS</span>
             <Flag className="w-6 h-6 text-red-600" />

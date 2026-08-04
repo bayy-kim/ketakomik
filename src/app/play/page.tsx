@@ -13,6 +13,7 @@ import { LetterState } from "@/components/LetterBox";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
 import { CheckCircle2, Lock, ArrowRight, BookOpen, Clock, Swords, Timer } from "lucide-react";
 import Link from "next/link";
+import { ComicDailyClaimModal } from "@/components/ComicDailyClaimModal";
 
 function PlayGameContainer() {
   const searchParams = useSearchParams();
@@ -374,6 +375,7 @@ function PlayGameContainer() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
+      {session && <ComicDailyClaimModal isLoggedIn={!!session} />}
       <Header
         mode={mode}
         onModeToggle={(m) => setMode(m)}

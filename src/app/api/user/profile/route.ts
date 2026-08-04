@@ -13,16 +13,65 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: currentUserId },
-      select: { tinta: true, tintaSpent: true, currentStreak: true },
+      select: { tinta: true, tintaSpent: true, currentStreak: true, username: true, email: true, avatarSeed: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
     }
 
-    return NextResponse.json({ tinta: user.tinta, tintaSpent: user.tintaSpent || 0, streak: user.currentStreak });
+    return NextResponse.json({
+      tinta: user.tinta,
+      tintaSpent: user.tintaSpent || 0,
+      streak: user.currentStreak,
+      username: user.username,
+      email: user.email,
+      avatarSeed: user.avatarSeed,
+    });
   } catch (error) {
     console.error("Error getting user status:", error);
     return NextResponse.json({ error: "Gagal memuat status user" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await auth();
+    const currentUserId = session?.user?.id;
+
+    if (!currentUserId) {
+      return NextResponse.json({ error: "Unauthorized. Anda harus login!" }, { status: 401 });
+    }
+
+    const { username, avatarSeed } = await request.json();
+
+    if (!username || username.trim().length < 3) {
+      return NextResponse.json({ error: "Username minimal 3 karakter!" }, { status: 400 });
+    }
+
+    // Check if username is taken by another user
+    const existing = await db.user.findFirst({
+      where: {
+        username: username.trim(),
+        NOT: { id: currentUserId },
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json({ error: "Username sudah dipakai oleh pemain lain!" }, { status: 400 });
+    }
+
+    const updatedUser = await db.user.update({
+      where: { id: currentUserId },
+      data: {
+        username: username.trim(),
+        avatarSeed: avatarSeed || "klu_fan",
+      },
+    });
+
+    return NextResponse.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return NextResponse.json({ error: "Gagal memperbarui profil komik" }, { status: 500 });
   }
 }
