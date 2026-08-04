@@ -48,6 +48,13 @@ function PlayGameContainer() {
   const [timeLeft, setTimeLeft] = useState<number>(120); // 120 Detik Countdown Timer
   const [timerActive, setTimerActive] = useState<boolean>(false);
 
+  // Next Word in Chapter State
+  const [nextWordInfo, setNextWordInfo] = useState<{ nextWordId: string; nextWordIndex: number; totalWords: number; chapterTitle: string } | null>(null);
+
+  // 1 Chapter Per Day Limit & 06:00 AM Reset Timer State
+  const [isChapterLimitReached, setIsChapterLimitReached] = useState(false);
+  const [resetTimerText, setResetTimerText] = useState("");
+
   // Countdown Timer Effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -69,6 +76,26 @@ function PlayGameContainer() {
     };
   }, [timerActive, timeLeft, isGameOver]);
 
+  // Countdown Timer to 06:00 AM Reset Effect
+  useEffect(() => {
+    function updateResetTimer() {
+      const now = new Date();
+      const nextReset = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6, 0, 0);
+      if (now.getTime() >= nextReset.getTime()) {
+        nextReset.setDate(nextReset.getDate() + 1);
+      }
+      const diffMs = nextReset.getTime() - now.getTime();
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+      setResetTimerText(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`);
+    }
+
+    updateResetTimer();
+    const interval = setInterval(updateResetTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Initialize word and local storage state
   useEffect(() => {
     async function syncAndInit() {
@@ -85,6 +112,13 @@ function PlayGameContainer() {
             activeTinta = data.tinta;
             activeStreak = data.streak;
             saveLocalGameState({ tinta: data.tinta, streak: data.streak });
+          }
+
+          // Cek batas 1 chapter per hari dari database
+          const limitRes = await fetch("/api/game/chapter-limit");
+          const limitData = await limitRes.json();
+          if (limitData.limitReached) {
+            setIsChapterLimitReached(true);
           }
         } catch (e) {
           console.error("Gagal sinkron status tinta play:", e);
@@ -215,6 +249,16 @@ function PlayGameContainer() {
         setComicScore(data.score || 85);
         setTargetWord(data.targetWord || currentGuess);
 
+        // Fetch next word info in the same chapter
+        fetch(`/api/game/next-word?wordId=${wordId}`)
+          .then((r) => r.json())
+          .then((nextData) => {
+            if (nextData.nextWordId) {
+              setNextWordInfo(nextData);
+            }
+          })
+          .catch((e) => console.error("Gagal cari kata selanjutnya:", e));
+
         const newTinta = tintaCount + (data.tintaEarned || 30);
         const newStreak = streakCount + 1;
         setTintaCount(newTinta);
@@ -340,8 +384,29 @@ function PlayGameContainer() {
       <AnnouncementBanner />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-4 flex flex-col items-center justify-between pb-24 sm:pb-4">
+        {/* Chapter Limit Reached Warning */}
+        {isChapterLimitReached && (
+          <div className="w-full bg-red-100 comic-border p-4 rounded-xl comic-shadow mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="flex items-center gap-2.5">
+              <span className="text-3xl">⏳</span>
+              <div>
+                <h3 className="font-bangers text-xl text-red-600 leading-none">
+                  LIMIT HARIAN: 1 CHAPTER SELESAI!
+                </h3>
+                <p className="text-xs font-sans text-gray-700 mt-1">
+                  Kamu telah menyelesaikan 1 Chapter penuh hari ini. Petualangan berikutnya akan terbuka setelah waktu reset!
+                </p>
+              </div>
+            </div>
+            <div className="bg-white comic-border-sm px-4 py-2 rounded-lg font-bangers text-sm text-comic-ink shadow-sm flex flex-col items-center">
+              <span className="text-[10px] text-gray-500 font-sans font-bold">RESET DALAM</span>
+              <span className="text-red-500 text-base">{resetTimerText}</span>
+            </div>
+          </div>
+        )}
+
         {/* Lock Banner if Already Solved Today */}
-        {isAlreadyCompletedToday && !isDuelMode && (
+        {isAlreadyCompletedToday && !isDuelMode && !isChapterLimitReached && (
           <div className="w-full bg-amber-100 comic-border p-3.5 rounded-xl comic-shadow mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
@@ -425,6 +490,27 @@ function PlayGameContainer() {
                   attemptsUsed={guesses.length}
                   tintaEarned={tintaEarned}
                 />
+                
+                {isWon && nextWordInfo && (
+                  <Link
+                    href={`/play?wordId=${nextWordInfo.nextWordId}`}
+                    onClick={() => {
+                      // Reset game states to play the next word in the same chapter
+                      setGuesses([]);
+                      setFeedbacks([]);
+                      setCurrentGuess("");
+                      setIsWon(false);
+                      setIsGameOver(false);
+                      setWordId(nextWordInfo.nextWordId);
+                      setNextWordInfo(null);
+                      setStartTime(Date.now());
+                    }}
+                    className="comic-btn text-base bg-comic-yellow text-comic-ink hover:bg-yellow-400 w-full py-3 text-center flex items-center justify-center gap-2 animate-bounce"
+                  >
+                    LANJUT KE KATA BERIKUTNYA (#{nextWordInfo.nextWordIndex} / {nextWordInfo.totalWords}) <ArrowRight className="w-4 h-4" />
+                  </Link>
+                )}
+
                 {isDuelMode && (
                   <Link
                     href={`/duel/${duelRoomCode}`}

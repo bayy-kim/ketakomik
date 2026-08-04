@@ -53,6 +53,7 @@ interface UserData {
   email: string;
   avatarSeed?: string;
   tinta: number;
+  tintaSpent: number;
   currentStreak: number;
   longestStreak: number;
   role: string;
@@ -256,6 +257,9 @@ export default function UserDashboardPage() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mt-2">
                 <div className="bg-blue-100 comic-border-sm px-2.5 py-0.5 rounded-md text-xs font-bangers text-comic-ink flex items-center gap-1">
                   <Droplet className="w-3.5 h-3.5 text-comic-klu fill-comic-klu" /> {user?.tinta} Tinta
+                </div>
+                <div className="bg-pink-100 comic-border-sm px-2.5 py-0.5 rounded-md text-xs font-bangers text-comic-ink flex items-center gap-1">
+                  <Droplet className="w-3.5 h-3.5 text-comic-bayangan fill-comic-bayangan" /> {user?.tintaSpent || 0} Tinta Dipakai
                 </div>
                 <div className="bg-amber-100 comic-border-sm px-2.5 py-0.5 rounded-md text-xs font-bangers text-comic-ink flex items-center gap-1">
                   <Flame className="w-3.5 h-3.5 text-orange-600 fill-orange-500" /> {user?.currentStreak} Streak Harian

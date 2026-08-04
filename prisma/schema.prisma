@@ -14,6 +14,7 @@ model User {
   avatarSeed          String            @default("klu_fan")
   role                Role              @default(USER)
   tinta               Int               @default(50)
+  tintaSpent          Int               @default(0)
   currentStreak       Int               @default(0)
   longestStreak       Int               @default(0)
   createdAt           DateTime          @default(now())

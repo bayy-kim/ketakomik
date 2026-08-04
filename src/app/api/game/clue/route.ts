@@ -37,7 +37,10 @@ export async function POST(request: Request) {
 
     await db.user.update({
       where: { id: currentUserId },
-      data: { tinta: { decrement: clueCost } },
+      data: {
+        tinta: { decrement: clueCost },
+        tintaSpent: { increment: clueCost },
+      },
     });
 
     let clueHonest: string | null = null;

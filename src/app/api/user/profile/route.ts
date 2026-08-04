@@ -13,14 +13,14 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: currentUserId },
-      select: { tinta: true, currentStreak: true },
+      select: { tinta: true, tintaSpent: true, currentStreak: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
     }
 
-    return NextResponse.json({ tinta: user.tinta, streak: user.currentStreak });
+    return NextResponse.json({ tinta: user.tinta, tintaSpent: user.tintaSpent || 0, streak: user.currentStreak });
   } catch (error) {
     console.error("Error getting user status:", error);
     return NextResponse.json({ error: "Gagal memuat status user" }, { status: 500 });

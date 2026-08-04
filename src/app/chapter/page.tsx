@@ -98,19 +98,37 @@ export default function ChapterPage() {
         ) : (
           /* Chapter List */
           <div className="flex flex-col gap-6">
-            {chapters.map((chapter) => {
+            {chapters.map((chapter, cIdx) => {
               const completedCount = chapter.words ? chapter.words.filter((w) => completedWordIds.includes(w.id)).length : 0;
               const totalWordsInChapter = chapter.words ? chapter.words.length : (chapter.totalWords || 5);
               const progressPercent = totalWordsInChapter > 0 ? Math.round((completedCount / totalWordsInChapter) * 100) : 0;
               const isAllCompleted = totalWordsInChapter > 0 && completedCount >= totalWordsInChapter;
 
+              // Sequential Lock: Chapter X unlocked only if Chapter X-1 is 100% completed (Chapter 1 is always unlocked)
+              const prevChapter = cIdx > 0 ? chapters[cIdx - 1] : null;
+              const prevCompletedCount = prevChapter && prevChapter.words ? prevChapter.words.filter((w) => completedWordIds.includes(w.id)).length : 0;
+              const prevTotalWords = prevChapter && prevChapter.words ? prevChapter.words.length : 5;
+              const isChapterUnlocked = cIdx === 0 || (prevChapter && prevCompletedCount >= prevTotalWords);
+
               return (
-                <div key={chapter.id} className="bg-white comic-border p-5 rounded-xl comic-shadow flex flex-col gap-4">
+                <div
+                  key={chapter.id}
+                  className={`comic-border p-5 rounded-xl comic-shadow flex flex-col gap-4 transition-all ${
+                    isChapterUnlocked ? "bg-white" : "bg-gray-100 opacity-75"
+                  }`}
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="bg-comic-klu text-white font-bangers text-sm px-2.5 py-0.5 rounded comic-border-sm">
-                        CHAPTER SPESIAL
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-comic-klu text-white font-bangers text-sm px-2.5 py-0.5 rounded comic-border-sm">
+                          CHAPTER #{cIdx + 1}
+                        </span>
+                        {!isChapterUnlocked && (
+                          <span className="bg-red-500 text-white font-bangers text-xs px-2 py-0.5 rounded comic-border-sm flex items-center gap-1">
+                            <Lock className="w-3 h-3" /> SELESAIKAN CHAPTER #{cIdx} DAHULU
+                          </span>
+                        )}
+                      </div>
                       <h2 className="font-bangers text-2xl sm:text-3xl text-comic-ink mt-1">{chapter.title}</h2>
                       <p className="text-xs sm:text-sm text-gray-700 font-sans italic mt-0.5">
                         &ldquo;{chapter.chapterNote}&rdquo;
@@ -157,20 +175,22 @@ export default function ChapterPage() {
                           <div
                             key={word.id}
                             className={`comic-border p-2.5 rounded-lg flex flex-col items-center justify-center gap-1 ${
-                              isSolved ? "bg-green-100" : "bg-gray-50"
+                              isSolved ? "bg-green-100" : isChapterUnlocked ? "bg-gray-50" : "bg-gray-200 opacity-60"
                             }`}
                           >
                             <span className="font-bangers text-sm text-comic-ink">KATA #{idx + 1}</span>
                             <span className="text-[10px] text-gray-500 font-sans">{word.category}</span>
                             {isSolved ? (
                               <CheckCircle className="w-4 h-4 text-emerald-600" />
-                            ) : (
+                            ) : isChapterUnlocked ? (
                               <Link
                                 href={`/play?wordId=${word.id}`}
                                 className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5"
                               >
                                 Mainkan <ArrowRight className="w-3 h-3" />
                               </Link>
+                            ) : (
+                              <Lock className="w-3.5 h-3.5 text-gray-400" />
                             )}
                           </div>
                         );
