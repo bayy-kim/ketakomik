@@ -17,7 +17,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Data clue tidak lengkap" }, { status: 400 });
     }
 
-    // Get the word
     const word = await db.word.findUnique({
       where: { id: wordId },
     });
@@ -26,9 +25,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Soal kata tidak ditemukan" }, { status: 404 });
     }
 
-    const clueCost = isHardcoreVoice ? 30 : 15;
+    const clueCost = character === "both" ? 15 : 10;
 
-    // Verify user has enough tinta
     const user = await db.user.findUnique({
       where: { id: currentUserId },
     });
@@ -37,17 +35,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Tinta Komik tidak cukup untuk membuka petunjuk!" }, { status: 400 });
     }
 
-    // Deduct tinta
     await db.user.update({
       where: { id: currentUserId },
       data: { tinta: { decrement: clueCost } },
     });
 
-    const clueText = character === "KLU" ? word.clueHonest : word.clueMisleading;
+    let clueHonest: string | null = null;
+    let clueMisleading: string | null = null;
+
+    if (character === "klu" || character === "both") {
+      clueHonest = word.clueHonest;
+    }
+    if (character === "bayangan" || character === "both") {
+      clueMisleading = word.clueMisleading;
+    }
 
     return NextResponse.json({
       success: true,
-      clue: clueText,
+      clueHonest,
+      clueMisleading,
+      tintaDeducted: clueCost,
       tintaRemaining: user.tinta - clueCost,
     });
   } catch (error) {
