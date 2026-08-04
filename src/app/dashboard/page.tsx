@@ -225,10 +225,10 @@ export default function UserDashboardPage() {
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-2.5 sm:px-4 py-4 sm:py-6 flex flex-col gap-5">
         {/* ===== USER PROFILE HEADER CARD ===== */}
-        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-xl comic-shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left w-full sm:w-auto">
             {/* Avatar Badge Terbungkus Border Komik */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-comic-yellow comic-border flex items-center justify-center font-bangers text-3xl sm:text-4xl text-comic-ink comic-shadow shrink-0 rotate-[-3deg] select-none">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-comic-yellow comic-border flex items-center justify-center font-bangers text-3xl sm:text-4xl text-comic-ink comic-shadow shrink-0 rotate-[-3deg] select-none">
               {currentAvatarEmoji}
             </div>
 
@@ -250,7 +250,7 @@ export default function UserDashboardPage() {
                   </Link>
                 )}
               </div>
-              <p className="text-xs font-sans text-gray-600 mt-1">{user?.email || "Detektif Tekakonik"}</p>
+              <p className="text-xs font-sans text-gray-600 mt-1">{user?.email || "Detektif Tekakomik"}</p>
 
               {/* Status Pills */}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mt-2">
@@ -283,7 +283,7 @@ export default function UserDashboardPage() {
         </div>
 
         {/* ===== QUICK ACCESS & NAVIGATION SHORTCUTS ===== */}
-        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow flex flex-col gap-3">
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-xl comic-shadow flex flex-col gap-3">
           <h2 className="font-bangers text-xl text-comic-ink mb-1">🧭 NAVIGASI & AKSES CEPAT</h2>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <Link
@@ -352,7 +352,7 @@ export default function UserDashboardPage() {
         </div>
 
         {/* ===== ANALITIK JAWABAN PER HARI (RECHARTS CHART) ===== */}
-        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow flex flex-col gap-4">
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-xl comic-shadow flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <div className="bg-comic-klu text-white font-bangers text-base sm:text-xl px-3 py-1 rounded comic-border-sm">
               📊 ANALITIK JAWABAN HARIAN (7 HARI TERAKHIR)
@@ -374,7 +374,7 @@ export default function UserDashboardPage() {
         </div>
 
         {/* ===== ACHIEVEMENTS GRID WITH COMIC-BORDERED BADGES & CLAIM BUTTONS ===== */}
-        <div className="bg-white comic-border p-4 sm:p-5 rounded-2xl comic-shadow flex flex-col gap-4">
+        <div className="bg-white comic-border p-4 sm:p-5 rounded-xl comic-shadow flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="bg-comic-yellow text-comic-ink font-bangers text-base sm:text-xl px-3 py-1 rounded comic-border-sm flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-comic-ink fill-comic-ink" />
@@ -466,7 +466,7 @@ export default function UserDashboardPage() {
       {/* ===== MODAL EDIT PROFIL KOMIK ===== */}
       {showEditProfileModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-comic-paper comic-border p-5 sm:p-6 rounded-2xl comic-shadow-lg max-w-md w-full flex flex-col gap-4 animate-in fade-in zoom-in relative">
+          <div className="bg-comic-paper comic-border p-5 sm:p-6 rounded-xl comic-shadow-lg max-w-md w-full flex flex-col gap-4 animate-in fade-in zoom-in relative">
             <button
               onClick={() => setShowEditProfileModal(false)}
               className="absolute top-4 right-4 p-1 rounded-md comic-border-sm hover:bg-gray-100 text-comic-ink"
@@ -532,7 +532,7 @@ export default function UserDashboardPage() {
       {/* ===== MODAL KONFIRMASI LOGOUT KOMIK ===== */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-comic-paper comic-border p-6 rounded-2xl comic-shadow-lg max-w-sm w-full flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in">
+          <div className="bg-comic-paper comic-border p-6 rounded-xl comic-shadow-lg max-w-sm w-full flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in">
             <div className="w-14 h-14 rounded-full bg-red-500 comic-border flex items-center justify-center text-white comic-shadow">
               <LogOut className="w-7 h-7" />
             </div>

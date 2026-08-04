@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-guard";
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
-    let suggestions: unknown[] = [];
-    try {
-      suggestions = await db.wordSuggestion.findMany({
-        orderBy: { createdAt: "desc" },
-        include: { submittedByUser: { select: { username: true } } },
-      });
-    } catch {
-      // Prisma fallback
-    }
+    const suggestions = await db.wordSuggestion.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { submittedByUser: { select: { username: true } } },
+    });
     return NextResponse.json({ suggestions });
   } catch (error) {
     console.error("Error fetching suggestions:", error);
@@ -20,6 +19,9 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
     const { suggestionId, status, adminUserId } = await request.json();
 
@@ -27,18 +29,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "ID dan status wajib diisi" }, { status: 400 });
     }
 
-    try {
-      const updated = await db.wordSuggestion.update({
-        where: { id: suggestionId },
-        data: {
-          status,
-          reviewedByAdminId: adminUserId || null,
-        },
-      });
-      return NextResponse.json({ success: true, updated });
-    } catch {
-      return NextResponse.json({ success: true });
-    }
+    const updated = await db.wordSuggestion.update({
+      where: { id: suggestionId },
+      data: {
+        status,
+        reviewedByAdminId: adminUserId || null,
+      },
+    });
+    return NextResponse.json({ success: true, updated });
   } catch (error) {
     console.error("Error updating suggestion status:", error);
     return NextResponse.json({ error: "Gagal memperbarui status usulan" }, { status: 500 });

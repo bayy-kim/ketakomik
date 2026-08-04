@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ShieldAlert, BookOpen, Layers, BarChart3, MessageSquarePlus, Megaphone, Flag, Home, Play } from "lucide-react";
+import { AdminBottomBar } from "@/components/AdminBottomBar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -68,57 +69,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
       </aside>
 
-      {/* 2. BOTTOM NAV BAR (Shown ONLY on Mobile/Tablet < lg) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t-4 border-comic-ink shadow-[0_-4px_0_#16161A] px-2 py-2 flex items-center justify-around">
-        <Link
-          href="/dashboardadmin"
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bangers text-comic-ink py-1 flex-1"
-          title="Dashboard Ringkasan"
-        >
-          <Home className="w-5 h-5 text-comic-ink" />
-          <span>RINGKASAN</span>
-        </Link>
-        <Link
-          href="/dashboardadmin/words"
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bangers text-comic-klu py-1 flex-1"
-          title="Kelola Kata"
-        >
-          <BookOpen className="w-5 h-5" />
-          <span>WORDS</span>
-        </Link>
-        <Link
-          href="/dashboardadmin/chapters"
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bangers text-comic-bayangan py-1 flex-1"
-          title="Chapters"
-        >
-          <Layers className="w-5 h-5" />
-          <span>CHAPTERS</span>
-        </Link>
-        <Link
-          href="/dashboardadmin/analytics"
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bangers text-emerald-700 py-1 flex-1"
-          title="Analytics"
-        >
-          <BarChart3 className="w-5 h-5" />
-          <span>ANALYTICS</span>
-        </Link>
-        <Link
-          href="/dashboardadmin/suggestions"
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bangers text-amber-700 py-1 flex-1"
-          title="Suggestions"
-        >
-          <MessageSquarePlus className="w-5 h-5" />
-          <span>USULAN</span>
-        </Link>
-        <Link
-          href="/play"
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bangers text-red-600 py-1 flex-1"
-          title="Kembali ke Game"
-        >
-          <Play className="w-5 h-5" />
-          <span>KELUAR</span>
-        </Link>
-      </nav>
+      {/* 2. DEDICATED ADMIN BOTTOM NAV BAR FOR MOBILE */}
+      <AdminBottomBar />
 
       {/* Main Admin Content Viewport */}
       <main className="flex-1 p-3 sm:p-6 overflow-y-auto max-w-full">{children}</main>

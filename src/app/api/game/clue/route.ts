@@ -1,51 +1,57 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
-import { FALLBACK_WORDS } from "@/lib/game-data-fallback";
+import { auth } from "@/auth";
 
 export async function POST(request: Request) {
   try {
-    const { wordId, character, userId } = await request.json(); // character: 'klu' | 'bayangan' | 'both'
+    const session = await auth();
+    const currentUserId = session?.user?.id;
 
-    if (!wordId) {
-      return NextResponse.json({ error: "Word ID wajib diisi" }, { status: 400 });
+    if (!currentUserId) {
+      return NextResponse.json({ error: "Anda harus login terlebih dahulu untuk membuka clue!" }, { status: 401 });
     }
 
-    let word;
-    try {
-      word = await db.word.findUnique({ where: { id: wordId } });
-    } catch {
-      // Prisma error fallback
+    const { wordId, character, isHardcoreVoice = false } = await request.json();
+
+    if (!wordId || !character) {
+      return NextResponse.json({ error: "Data clue tidak lengkap" }, { status: 400 });
     }
+
+    // Get the word
+    const word = await db.word.findUnique({
+      where: { id: wordId },
+    });
 
     if (!word) {
-      word = FALLBACK_WORDS.find((w) => w.id === wordId) || FALLBACK_WORDS[0];
+      return NextResponse.json({ error: "Soal kata tidak ditemukan" }, { status: 404 });
     }
 
-    const tintaCost = character === "both" ? 15 : 10;
+    const clueCost = isHardcoreVoice ? 30 : 15;
 
-    // Deduct tinta if userId is present
-    if (userId) {
-      try {
-        const user = await db.user.findUnique({ where: { id: userId } });
-        if (user && user.tinta < tintaCost) {
-          return NextResponse.json({ error: "Tinta kamu tidak cukup untuk membuka petunjuk!" }, { status: 400 });
-        }
-        await db.user.update({
-          where: { id: userId },
-          data: { tinta: { decrement: tintaCost } },
-        });
-      } catch {
-        // Fallback for demo
-      }
+    // Verify user has enough tinta
+    const user = await db.user.findUnique({
+      where: { id: currentUserId },
+    });
+
+    if (!user || user.tinta < clueCost) {
+      return NextResponse.json({ error: "Tinta Komik tidak cukup untuk membuka petunjuk!" }, { status: 400 });
     }
+
+    // Deduct tinta
+    await db.user.update({
+      where: { id: currentUserId },
+      data: { tinta: { decrement: clueCost } },
+    });
+
+    const clueText = character === "KLU" ? word.clueHonest : word.clueMisleading;
 
     return NextResponse.json({
-      clueHonest: character === "bayangan" ? null : word.clueHonest,
-      clueMisleading: character === "klu" ? null : word.clueMisleading,
-      tintaDeducted: tintaCost,
+      success: true,
+      clue: clueText,
+      tintaRemaining: user.tinta - clueCost,
     });
   } catch (error) {
-    console.error("Error fetching clue:", error);
-    return NextResponse.json({ error: "Gagal mengambil clue" }, { status: 500 });
+    console.error("Error revealing clue:", error);
+    return NextResponse.json({ error: "Gagal membuka petunjuk" }, { status: 500 });
   }
 }

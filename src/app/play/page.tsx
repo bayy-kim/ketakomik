@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Header } from "@/components/Header";
 import { GameBoard } from "@/components/GameBoard";
 import { VirtualKeyboard } from "@/components/VirtualKeyboard";
@@ -9,10 +11,14 @@ import { ResultShareCard } from "@/components/ResultShareCard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LetterState } from "@/components/LetterBox";
 import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
-import { CheckCircle2, Lock, ArrowRight, BookOpen, Clock } from "lucide-react";
+import { CheckCircle2, Lock, ArrowRight, BookOpen, Clock, Swords, Timer } from "lucide-react";
 import Link from "next/link";
 
 function PlayGameContainer() {
+  const searchParams = useSearchParams();
+  const duelRoomCode = searchParams.get("duel");
+  const { data: session } = useSession();
+
   const [wordId, setWordId] = useState<string>("w1");
   const [wordLength, setWordLength] = useState<number>(5);
   const [category, setCategory] = useState<string>("Misteri");
@@ -37,6 +43,32 @@ function PlayGameContainer() {
   const [feedbackBurst, setFeedbackBurst] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<number>(Date.now());
 
+  // DUEL MODE & COUNTDOWN TIMER STATES
+  const [isDuelMode, setIsDuelMode] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(120); // 120 Detik Countdown Timer
+  const [timerActive, setTimerActive] = useState<boolean>(false);
+
+  // Countdown Timer Effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (timerActive && timeLeft > 0 && !isGameOver) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setTimerActive(false);
+            setIsGameOver(true);
+            setFeedbackBurst("WAKTU HABIS!");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive, timeLeft, isGameOver]);
+
   // Initialize word and local storage state
   useEffect(() => {
     const state = getLocalGameState();
@@ -45,8 +77,25 @@ function PlayGameContainer() {
     setMode(state.mode);
     setStartTime(Date.now());
 
-    async function initTodayWord() {
+    async function initWord() {
       try {
+        if (duelRoomCode) {
+          setIsDuelMode(true);
+          // Fetch data dari room duel
+          const res = await fetch(`/api/duel/${duelRoomCode}`);
+          const data = await res.json();
+          if (data.wordId) {
+            setWordId(data.wordId);
+            setWordLength(data.wordLength || 5);
+            setCategory(data.category || "Duel");
+            setDifficulty(data.difficulty || "MEDIUM");
+            setTimeLeft(120);
+            setTimerActive(true);
+            return;
+          }
+        }
+
+        // Mode Normal Harian
         const res = await fetch("/api/game/today");
         const data = await res.json();
         if (data.id) {
@@ -69,22 +118,24 @@ function PlayGameContainer() {
           }
         }
       } catch (e) {
-        console.error("Gagal memuat kata hari ini:", e);
+        console.error("Gagal memuat kata:", e);
       }
     }
 
-    initTodayWord();
-  }, []);
+    initWord();
+  }, [duelRoomCode]);
 
   const handleChar = useCallback((char: string) => {
     if (isGameOver || loading || isAlreadyCompletedToday) return;
+    if (!timerActive && isDuelMode) setTimerActive(true);
+
     setCurrentGuess((prev) => {
       if (prev.length < wordLength) {
         return prev + char.toUpperCase();
       }
       return prev;
     });
-  }, [isGameOver, loading, isAlreadyCompletedToday, wordLength]);
+  }, [isGameOver, loading, isAlreadyCompletedToday, wordLength, timerActive, isDuelMode]);
 
   const handleDelete = useCallback(() => {
     if (isGameOver || loading || isAlreadyCompletedToday) return;
@@ -111,15 +162,19 @@ function PlayGameContainer() {
           wordId,
           guess: currentGuess,
           attemptNumber: guesses.length + 1,
+          guessesHistory: guesses.map((g, idx) => ({ guess: g, feedback: feedbacks[idx] })),
           anonId: state.anonId,
+          userId: session?.user?.id || null,
           mode,
           durationSeconds,
+          roomCode: duelRoomCode || undefined,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Tebakan tidak valid");
+        setFeedbackBurst("TIDAK VALID!");
+        setTimeout(() => setFeedbackBurst(null), 1200);
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 500);
         return;
@@ -136,7 +191,8 @@ function PlayGameContainer() {
         setFeedbackBurst("TEPAT!");
         setIsWon(true);
         setIsGameOver(true);
-        setIsAlreadyCompletedToday(true);
+        setTimerActive(false);
+        if (!isDuelMode) setIsAlreadyCompletedToday(true);
         setTintaEarned(data.tintaEarned || 30);
         setComicScore(data.score || 85);
         setTargetWord(data.targetWord || currentGuess);
@@ -166,7 +222,8 @@ function PlayGameContainer() {
       } else if (data.isGameOver) {
         setFeedbackBurst("MELESET!");
         setIsGameOver(true);
-        setIsAlreadyCompletedToday(true);
+        setTimerActive(false);
+        if (!isDuelMode) setIsAlreadyCompletedToday(true);
         setTargetWord(data.targetWord || "");
 
         const completedIds = Array.from(new Set([...(state.completedWordIds || []), wordId]));
@@ -197,7 +254,7 @@ function PlayGameContainer() {
     } finally {
       setLoading(false);
     }
-  }, [currentGuess, feedbacks, guesses, isAlreadyCompletedToday, isGameOver, loading, mode, startTime, streakCount, tintaCount, wordId, wordLength]);
+  }, [currentGuess, feedbacks, guesses, isAlreadyCompletedToday, isGameOver, loading, mode, startTime, streakCount, tintaCount, wordId, wordLength, session, duelRoomCode, isDuelMode]);
 
   // Global Physical Keyboard Event Listener
   useEffect(() => {
@@ -247,6 +304,12 @@ function PlayGameContainer() {
     }
   });
 
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
       <Header
@@ -260,7 +323,7 @@ function PlayGameContainer() {
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-4 flex flex-col items-center justify-between pb-24 sm:pb-4">
         {/* Lock Banner if Already Solved Today */}
-        {isAlreadyCompletedToday && (
+        {isAlreadyCompletedToday && !isDuelMode && (
           <div className="w-full bg-amber-100 comic-border p-3.5 rounded-xl comic-shadow mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
@@ -283,10 +346,24 @@ function PlayGameContainer() {
           </div>
         )}
 
+        {/* Duel Mode Timer Indicator Banner */}
+        {isDuelMode && (
+          <div className="w-full bg-comic-bayangan comic-border p-3 rounded-xl comic-shadow mb-4 flex items-center justify-between text-white">
+            <div className="flex items-center gap-2 font-bangers text-lg">
+              <Swords className="w-5 h-5 text-comic-yellow" />
+              <span>PER_DUELAN KOMIK ROOM: {duelRoomCode}</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white text-comic-ink px-3 py-1 rounded-full font-bangers text-base comic-border-sm">
+              <Timer className="w-4 h-4 text-red-500 animate-pulse" />
+              <span>SISA WAKTU: {formatTimer(timeLeft)}</span>
+            </div>
+          </div>
+        )}
+
         {/* Desktop 2-Column Responsive Layout */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main Game Board Column */}
-          <div className="lg:col-span-7 flex flex-col items-center justify-center bg-white lg:comic-border lg:p-6 lg:rounded-2xl lg:comic-shadow relative">
+          <div className="lg:col-span-7 flex flex-col items-center justify-center bg-white lg:comic-border lg:p-6 lg:rounded-xl lg:comic-shadow relative">
             {/* Category & Info Badge */}
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-white comic-border px-3 py-1 rounded-full font-bangers text-sm sm:text-base text-comic-ink comic-shadow-sm">
@@ -295,11 +372,6 @@ function PlayGameContainer() {
               <span className="bg-comic-yellow comic-border px-3 py-1 rounded-full font-bangers text-sm sm:text-base text-comic-ink comic-shadow-sm">
                 TINGKAT: <span className="text-comic-ink">{difficulty}</span>
               </span>
-            </div>
-
-            {/* Desktop Keyboard Helper Hint */}
-            <div className="hidden lg:flex items-center gap-1.5 text-xs font-sans text-gray-500 mb-2">
-              <span>⌨️ Ketik langsung lewat keyboard komputer: <strong className="text-comic-ink">A-Z</strong> (Huruf) | <strong className="text-comic-ink">Enter</strong> (Cek) | <strong className="text-comic-ink">Backspace</strong> (Hapus)</span>
             </div>
 
             {/* Visual Feedback Burst Overlay */}
@@ -325,15 +397,25 @@ function PlayGameContainer() {
 
             {/* Result Share Card Modal if Game Over */}
             {isGameOver && (
-              <ResultShareCard
-                won={isWon}
-                wordId={wordId}
-                targetWord={targetWord}
-                guesses={guesses}
-                feedbacks={feedbacks}
-                attemptsUsed={guesses.length}
-                tintaEarned={tintaEarned}
-              />
+              <div className="w-full flex flex-col items-center gap-3">
+                <ResultShareCard
+                  won={isWon}
+                  wordId={wordId}
+                  targetWord={targetWord}
+                  guesses={guesses}
+                  feedbacks={feedbacks}
+                  attemptsUsed={guesses.length}
+                  tintaEarned={tintaEarned}
+                />
+                {isDuelMode && (
+                  <Link
+                    href={`/duel/${duelRoomCode}`}
+                    className="comic-btn text-base bg-comic-bayangan text-white hover:bg-pink-600 px-6 py-3"
+                  >
+                    <Swords className="w-5 h-5" /> LIHAT ARENA PERTANDINGAN DUEL
+                  </Link>
+                )}
+              </div>
             )}
 
             {/* On-screen Virtual Keyboard (Inside left column, below game board) */}

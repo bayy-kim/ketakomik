@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Volume2, Droplet, Eye, HelpCircle } from "lucide-react";
+import { ComicModal } from "./ComicModal";
 
 interface ClueDualPanelProps {
   wordId: string;
@@ -21,6 +22,10 @@ export function ClueDualPanel({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Confirmation Modal states
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingClueChar, setPendingClueChar] = useState<"klu" | "bayangan" | "both" | null>(null);
+
   // Web Speech fallback state
   const [showTextFallbackKlu, setShowTextFallbackKlu] = useState(false);
   const [showTextFallbackBayangan, setShowTextFallbackBayangan] = useState(false);
@@ -31,6 +36,15 @@ export function ClueDualPanel({
       setErrorMsg(`Tinta tidak cukup! Butuh ${cost} Tinta.`);
       return;
     }
+
+    setPendingClueChar(char);
+    setShowConfirm(true);
+  };
+
+  const executeFetchClue = async () => {
+    if (!pendingClueChar) return;
+    const char = pendingClueChar;
+    const cost = char === "both" ? 15 : 10;
 
     setLoading(true);
     setErrorMsg("");
@@ -58,13 +72,14 @@ export function ClueDualPanel({
       }
 
       if (onDeductTinta) {
-        onDeductTinta(data.tintaDeducted);
+        onDeductTinta(cost);
       }
     } catch (e) {
       console.error(e);
       setErrorMsg("Koneksi bermasalah!");
     } finally {
       setLoading(false);
+      setPendingClueChar(null);
     }
   };
 
@@ -86,8 +101,36 @@ export function ClueDualPanel({
     }
   };
 
+  const getConfirmationMessage = () => {
+    if (pendingClueChar === "both") {
+      return "Apakah kamu yakin ingin menukar 15 Tinta Komik untuk membuka Clue Kapten Klu sekaligus Clue Bayangan?";
+    }
+    if (pendingClueChar === "klu") {
+      return "Apakah kamu yakin ingin menukar 10 Tinta Komik untuk membuka Clue Jujur Kapten Klu?";
+    }
+    if (pendingClueChar === "bayangan") {
+      return "Apakah kamu yakin ingin menukar 10 Tinta Komik untuk membuka Clue Trik Bayangan?";
+    }
+    return "";
+  };
+
   return (
     <div className="w-full flex flex-col gap-4 my-2">
+      {/* Clue confirmation modal */}
+      <ComicModal
+        isOpen={showConfirm}
+        onClose={() => {
+          setShowConfirm(false);
+          setPendingClueChar(null);
+        }}
+        title="KONFIRMASI BANTUAN CLUE"
+        message={getConfirmationMessage()}
+        type="confirm"
+        onConfirm={executeFetchClue}
+        confirmText="YA, TUKAR TINTA"
+        cancelText="BATAL"
+      />
+
       {/* Help Action Trigger */}
       {!clueKlu && !clueBayangan && (
         <div className="bg-amber-50 comic-border p-3.5 rounded-lg comic-shadow text-center flex flex-col items-center gap-2">

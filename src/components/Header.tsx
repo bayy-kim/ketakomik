@@ -40,7 +40,7 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
   const alertLoginRequired = (e: React.MouseEvent) => {
     if (!isLoggedIn) {
       e.preventDefault();
-      alert("🔒 Kamu harus Login terlebih dahulu untuk bermain dan membuka fitur ini!");
+      window.location.href = "/auth/login";
     }
   };
 

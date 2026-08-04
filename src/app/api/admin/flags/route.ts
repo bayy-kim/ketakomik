@@ -1,23 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-guard";
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
-    let flags: unknown[] = [];
-    try {
-      flags = await db.featureFlag.findMany();
-    } catch {
-      // Prisma fallback
-    }
-
-    if (!flags || flags.length === 0) {
-      flags = [
-        { id: "f1", key: "duel_mode", isEnabled: true },
-        { id: "f2", key: "hardcore_mode", isEnabled: true },
-        { id: "f3", key: "maintenance_mode", isEnabled: false },
-      ];
-    }
-
+    const flags = await db.featureFlag.findMany();
     return NextResponse.json({ flags });
   } catch (error) {
     console.error("Error fetching feature flags:", error);
@@ -26,6 +16,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
     const { key, isEnabled } = await request.json();
 
@@ -33,16 +26,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Key feature flag wajib diisi" }, { status: 400 });
     }
 
-    try {
-      const flag = await db.featureFlag.upsert({
-        where: { key },
-        update: { isEnabled },
-        create: { key, isEnabled },
-      });
-      return NextResponse.json({ success: true, flag });
-    } catch {
-      return NextResponse.json({ success: true, flag: { key, isEnabled } });
-    }
+    const flag = await db.featureFlag.upsert({
+      where: { key },
+      update: { isEnabled },
+      create: { key, isEnabled },
+    });
+    return NextResponse.json({ success: true, flag });
   } catch (error) {
     console.error("Error updating feature flag:", error);
     return NextResponse.json({ error: "Gagal memperbarui feature flag" }, { status: 500 });

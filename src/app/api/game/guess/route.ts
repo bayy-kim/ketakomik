@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
-import { FALLBACK_WORDS } from "@/lib/game-data-fallback";
+import { auth } from "@/auth";
 
 export type LetterFeedback = "CORRECT" | "PRESENT" | "ABSENT";
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    const currentUserId = session?.user?.id || null;
+
     const body = await request.json();
-    const { wordId, guess, attemptNumber, anonId, userId, mode = "NORMAL", durationSeconds = 0, cluesUsed = 0 } = body;
+    const { wordId, guess, attemptNumber, guessesHistory = [], mode = "NORMAL", durationSeconds = 0, cluesUsed = 0, roomCode } = body;
 
     if (!wordId || !guess || typeof guess !== "string") {
       return NextResponse.json({ error: "Data tebakan tidak valid" }, { status: 400 });
@@ -15,22 +18,12 @@ export async function POST(request: Request) {
 
     const normalizedGuess = guess.trim().toUpperCase();
 
-    let targetWordText = "";
-    let wordDb;
-
-    try {
-      wordDb = await db.word.findUnique({ where: { id: wordId } });
-      if (wordDb) {
-        targetWordText = wordDb.normalizedText.toUpperCase();
-      }
-    } catch (e) {
-      console.error(e);
+    const wordDb = await db.word.findUnique({ where: { id: wordId } });
+    if (!wordDb) {
+      return NextResponse.json({ error: "Soal kata tidak ditemukan di database" }, { status: 404 });
     }
 
-    if (!targetWordText) {
-      const fallbackWord = FALLBACK_WORDS.find((w) => w.id === wordId) || FALLBACK_WORDS[0];
-      targetWordText = fallbackWord.normalizedText.toUpperCase();
-    }
+    const targetWordText = wordDb.normalizedText.toUpperCase();
 
     if (normalizedGuess.length !== targetWordText.length) {
       return NextResponse.json(
@@ -70,15 +63,19 @@ export async function POST(request: Request) {
     const isWon = feedback.every((f) => f === "CORRECT");
     const isGameOver = isWon || attemptNumber >= 6;
 
+    // Build complete guess history array
+    const fullGuesses = Array.isArray(guessesHistory) && guessesHistory.length > 0
+      ? [...guessesHistory, { guess: normalizedGuess, feedback }]
+      : [{ guess: normalizedGuess, feedback }];
+
     // UNIK TEKAKOMIK COMIC SCORE FORMULA:
-    // Base 100 - (attemptNumber - 1) * 15 - (cluesUsed * 10) + SpeedBonus (up to 15) + HardcoreVoiceBonus (25)
     let score = 0;
     let tintaEarned = 0;
 
     if (isWon) {
       const baseScore = Math.max(25, 100 - (attemptNumber - 1) * 15);
       const cluePenalty = cluesUsed * 10;
-      const speedBonus = durationSeconds > 0 && durationSeconds < 30 ? Math.max(0, 30 - durationSeconds) : 0;
+      const speedBonus = durationSeconds > 0 && durationSeconds < 120 ? Math.max(0, 120 - durationSeconds) : 0;
       const voiceBonus = mode === "HARDCORE_VOICE" ? 25 : 0;
 
       score = Math.max(10, baseScore - cluePenalty + speedBonus + voiceBonus);
@@ -86,34 +83,64 @@ export async function POST(request: Request) {
     }
 
     // Save GameSession if completed
-    try {
-      if (isGameOver) {
-        await db.gameSession.create({
-          data: {
-            wordId: wordDb?.id || wordId,
-            userId: userId || null,
-            anonId: anonId || "guest",
-            guesses: [{ guess: normalizedGuess, feedback }],
-            attemptsUsed: attemptNumber,
-            won: isWon,
-            mode: mode === "HARDCORE_VOICE" ? "HARDCORE_VOICE" : "NORMAL",
-            durationSeconds,
-            score, // Save calculated score to database
-          },
-        });
+    if (isGameOver && currentUserId) {
+      await db.gameSession.create({
+        data: {
+          wordId: wordDb.id,
+          userId: currentUserId,
+          guesses: fullGuesses,
+          attemptsUsed: attemptNumber,
+          won: isWon,
+          mode: mode === "HARDCORE_VOICE" ? "HARDCORE_VOICE" : "NORMAL",
+          durationSeconds,
+          score,
+        },
+      });
 
-        if (isWon && userId) {
+      // Handle user streak and longestStreak updates
+      const user = await db.user.findUnique({ where: { id: currentUserId } });
+      if (user) {
+        if (isWon) {
+          const newStreak = user.currentStreak + 1;
+          const newLongest = Math.max(user.longestStreak, newStreak);
           await db.user.update({
-            where: { id: userId },
+            where: { id: currentUserId },
             data: {
               tinta: { increment: tintaEarned },
-              currentStreak: { increment: 1 },
+              currentStreak: newStreak,
+              longestStreak: newLongest,
+            },
+          });
+        } else {
+          // Reset streak on loss
+          await db.user.update({
+            where: { id: currentUserId },
+            data: {
+              currentStreak: 0,
             },
           });
         }
       }
-    } catch (e) {
-      console.error("Failed to save game session to db:", e);
+
+      // Update duel status if part of a room challenge
+      if (roomCode) {
+        const duel = await db.duelChallenge.findUnique({
+          where: { roomCode: roomCode.toUpperCase() },
+        });
+
+        if (duel) {
+          const isCreator = duel.creatorSessionId === currentUserId;
+          const isOpponent = duel.opponentSessionId === currentUserId;
+
+          if (isCreator || isOpponent) {
+            const updatedStatus = duel.creatorSessionId && duel.opponentSessionId ? "COMPLETED" : "ACTIVE";
+            await db.duelChallenge.update({
+              where: { id: duel.id },
+              data: { status: updatedStatus },
+            });
+          }
+        }
+      }
     }
 
     const responsePayload: {

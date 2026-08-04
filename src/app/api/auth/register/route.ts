@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { db } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
@@ -18,46 +18,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Password minimal 6 karakter!" }, { status: 400 });
     }
 
-    const cleanUsername = username.trim();
-    const cleanEmail = email.trim().toLowerCase();
+    const existingUser = await db.user.findFirst({
+      where: {
+        OR: [{ email }, { username }],
+      },
+    });
 
-    try {
-      // Check existing username or email
-      const existingUser = await db.user.findFirst({
-        where: {
-          OR: [{ username: cleanUsername }, { email: cleanEmail }],
-        },
-      });
-
-      if (existingUser) {
-        return NextResponse.json({ error: "Username atau email sudah terdaftar!" }, { status: 400 });
-      }
-
-      const passwordHash = await bcrypt.hash(password, 10);
-
-      const newUser = await db.user.create({
-        data: {
-          username: cleanUsername,
-          email: cleanEmail,
-          passwordHash,
-          tinta: 100, // Bonus 100 Tinta pendaftaran akun baru
-          role: "USER",
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        user: { id: newUser.id, username: newUser.username, email: newUser.email },
-      });
-    } catch {
-      // Demo fallback success if db unreachable
-      return NextResponse.json({
-        success: true,
-        user: { id: `u-${Date.now()}`, username: cleanUsername, email: cleanEmail },
-      });
+    if (existingUser) {
+      return NextResponse.json({ error: "Email atau Username sudah digunakan!" }, { status: 400 });
     }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await db.user.create({
+      data: {
+        username: username.trim(),
+        email,
+        passwordHash,
+        tinta: 100, // Bonus tinta pendaftaran
+      },
+    });
+
+    return NextResponse.json({ success: true, userId: user.id });
   } catch (error) {
-    console.error("Error during registration:", error);
-    return NextResponse.json({ error: "Gagal mendaftarkan akun baru" }, { status: 500 });
+    console.error("Error registering user:", error);
+    return NextResponse.json({ error: "Gagal melakukan pendaftaran akun" }, { status: 500 });
   }
 }

@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { Header } from "@/components/Header";
-import { Swords, Plus, ArrowRight } from "lucide-react";
+import { Swords, Plus, ArrowRight, Clock, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function DuelLandingPage() {
   const [roomCodeInput, setRoomCodeInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   const handleJoinDuel = () => {
     if (!roomCodeInput || roomCodeInput.trim().length < 4) {
@@ -18,18 +22,34 @@ export default function DuelLandingPage() {
   };
 
   const handleCreateNewDuel = async () => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login?callbackUrl=/duel");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg("");
+
     try {
       const res = await fetch("/api/duel/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wordId: "w1", creatorSessionId: `sess-${Date.now()}` }),
+        body: JSON.stringify({ timeLimitSeconds: 120 }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Gagal membuat room duel");
+        return;
+      }
+
       if (data.roomCode) {
         router.push(`/duel/${data.roomCode}`);
       }
     } catch (e) {
       console.error("Gagal membuat room duel:", e);
+      setErrorMsg("Koneksi bermasalah!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,11 +65,13 @@ export default function DuelLandingPage() {
           </div>
 
           <div>
-            <h1 className="font-bangers text-3xl sm:text-4xl text-comic-ink">MODE DUEL ASINKRON</h1>
+            <h1 className="font-bangers text-3xl sm:text-4xl text-comic-ink">MODE DUEL ASINKRON PERTANDINGAN KOMIK</h1>
             <p className="text-xs sm:text-sm font-sans text-gray-700 mt-1">
-              Tantang temanmu menebak kata yang SAMA dan bandingkan hasilnya dalam 2 Panel Komik Bersebelahan!
+              Tantang temanmu menebak kata yang SAMA dengan batasan waktu 120 Detik! Hasil tebakan akan otomatis tercatat di Papan Peringkat (Leaderboard).
             </p>
           </div>
+
+          {errorMsg && <div className="w-full bg-red-100 comic-border-sm p-3 rounded text-xs font-bold text-red-600">{errorMsg}</div>}
 
           {/* Join Duel Section */}
           <div className="w-full bg-amber-50 comic-border p-4 rounded-xl flex flex-col gap-2">
@@ -83,9 +105,11 @@ export default function DuelLandingPage() {
           {/* Create New Duel */}
           <button
             onClick={handleCreateNewDuel}
+            disabled={loading}
             className="comic-btn text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-3"
           >
-            <Plus className="w-5 h-5" /> BUAT DUEL BARU HARI INI
+            {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+            {loading ? "MEMBUAT ROOM DUEL..." : "BUAT DUEL BARU HARI INI"}
           </button>
         </div>
       </main>

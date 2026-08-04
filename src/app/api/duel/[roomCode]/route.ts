@@ -1,40 +1,46 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
-import { FALLBACK_WORDS } from "@/lib/game-data-fallback";
 
 export async function GET(request: Request, { params }: { params: Promise<{ roomCode: string }> }) {
   try {
     const { roomCode } = await params;
 
-    let duel;
-    try {
-      duel = await db.duelChallenge.findUnique({
-        where: { roomCode: roomCode.toUpperCase() },
-        include: { word: true },
-      });
-    } catch {
-      // Prisma error fallback
-    }
+    const duel = await db.duelChallenge.findUnique({
+      where: { roomCode: roomCode.toUpperCase() },
+      include: {
+        word: true,
+      },
+    });
 
     if (!duel) {
-      // Fallback mock duel room
-      const wordFallback = FALLBACK_WORDS[0];
-      return NextResponse.json({
-        roomCode: roomCode.toUpperCase(),
-        wordId: wordFallback.id,
-        wordLength: wordFallback.normalizedText.length,
-        category: wordFallback.category,
-        difficulty: wordFallback.difficulty,
-        creatorSession: {
-          attemptsUsed: 3,
-          durationSeconds: 45,
-          won: true,
-          guesses: ["KIKIS", "KOALA", "KOMIK"],
-        },
-        opponentSession: null,
-        status: "ACTIVE",
-      });
+      return NextResponse.json({ error: "Room duel tidak ditemukan!" }, { status: 404 });
     }
+
+    // Ambil detail game session untuk pembuat duel & lawan duel
+    // creatorSessionId & opponentSessionId menyimpan ID User (NextAuth)
+    const [creatorUser, opponentUser] = await Promise.all([
+      db.user.findUnique({ where: { id: duel.creatorSessionId }, select: { username: true, avatarSeed: true } }),
+      duel.opponentSessionId ? db.user.findUnique({ where: { id: duel.opponentSessionId }, select: { username: true, avatarSeed: true } }) : Promise.resolve(null),
+    ]);
+
+    const [creatorGameSession, opponentGameSession] = await Promise.all([
+      db.gameSession.findFirst({
+        where: {
+          wordId: duel.wordId,
+          userId: duel.creatorSessionId,
+        },
+        orderBy: { completedAt: "desc" },
+      }),
+      duel.opponentSessionId
+        ? db.gameSession.findFirst({
+            where: {
+              wordId: duel.wordId,
+              userId: duel.opponentSessionId,
+            },
+            orderBy: { completedAt: "desc" },
+          })
+        : Promise.resolve(null),
+    ]);
 
     return NextResponse.json({
       roomCode: duel.roomCode,
@@ -45,9 +51,75 @@ export async function GET(request: Request, { params }: { params: Promise<{ room
       creatorSessionId: duel.creatorSessionId,
       opponentSessionId: duel.opponentSessionId,
       status: duel.status,
+      creatorName: creatorUser?.username || "Pemain 1",
+      creatorAvatar: creatorUser?.avatarSeed || "klu_fan",
+      opponentName: opponentUser?.username || "Penantang",
+      opponentAvatar: opponentUser?.avatarSeed || "bayangan_fan",
+      creatorSession: creatorGameSession
+        ? {
+            attemptsUsed: creatorGameSession.attemptsUsed,
+            durationSeconds: creatorGameSession.durationSeconds,
+            won: creatorGameSession.won,
+            guesses: Array.isArray(creatorGameSession.guesses)
+              ? (creatorGameSession.guesses as Array<{ guess: string }>).map((g) => g.guess)
+              : [],
+            score: creatorGameSession.score,
+          }
+        : null,
+      opponentSession: opponentGameSession
+        ? {
+            attemptsUsed: opponentGameSession.attemptsUsed,
+            durationSeconds: opponentGameSession.durationSeconds,
+            won: opponentGameSession.won,
+            guesses: Array.isArray(opponentGameSession.guesses)
+              ? (opponentGameSession.guesses as Array<{ guess: string }>).map((g) => g.guess)
+              : [],
+            score: opponentGameSession.score,
+          }
+        : null,
     });
   } catch (error) {
     console.error("Error fetching duel room:", error);
     return NextResponse.json({ error: "Gagal mengambil data duel" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request, { params }: { params: Promise<{ roomCode: string }> }) {
+  try {
+    const { roomCode } = await params;
+    const { userId } = await request.json();
+
+    if (!userId) {
+      return NextResponse.json({ error: "User ID wajib diisi" }, { status: 400 });
+    }
+
+    const duel = await db.duelChallenge.findUnique({
+      where: { roomCode: roomCode.toUpperCase() },
+    });
+
+    if (!duel) {
+      return NextResponse.json({ error: "Room duel tidak ditemukan!" }, { status: 404 });
+    }
+
+    if (duel.creatorSessionId === userId) {
+      return NextResponse.json({ success: true, message: "Kamu adalah pembuat room ini!" });
+    }
+
+    if (duel.opponentSessionId && duel.opponentSessionId !== userId) {
+      return NextResponse.json({ error: "Room duel ini sudah diisi oleh pemain lain!" }, { status: 400 });
+    }
+
+    const updatedDuel = await db.duelChallenge.update({
+      where: { roomCode: roomCode.toUpperCase() },
+      data: {
+        opponentSessionId: userId,
+        status: "ACTIVE",
+      },
+    });
+
+    return NextResponse.json({ success: true, duel: updatedDuel });
+  } catch (error) {
+    console.error("Error updating duel status:", error);
+    return NextResponse.json({ error: "Gagal masuk room duel" }, { status: 500 });
   }
 }

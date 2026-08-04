@@ -10,7 +10,7 @@ export function AnnouncementBanner() {
   useEffect(() => {
     async function fetchBanner() {
       try {
-        const res = await fetch("/api/admin/announcements");
+        const res = await fetch("/api/announcements");
         const data = await res.json();
         if (data.announcements && data.announcements.length > 0) {
           const active = data.announcements.find((a: { isActive: boolean }) => a.isActive);

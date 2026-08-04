@@ -106,11 +106,7 @@ export default function AdminChaptersPage() {
       }
 
       setSuccessMsg(editingId ? "Chapter berhasil diperbarui!" : "Chapter berhasil dibuat!");
-      setTitle("");
-      setChapterNote("");
-      setUnlockComicImageUrl("");
-      setIsPublished(true);
-      setEditingId(null);
+      handleCancelEdit();
       loadChapters();
     } catch (err) {
       console.error(err);
@@ -127,6 +123,8 @@ export default function AdminChaptersPage() {
     setUnlockComicImageUrl(ch.unlockComicImageUrl || "");
     setWeekStartDate(ch.weekStartDate.split("T")[0]);
     setIsPublished(ch.isPublished);
+    setErrorMsg("");
+    setSuccessMsg("");
   };
 
   const handleCancelEdit = () => {
@@ -143,18 +141,27 @@ export default function AdminChaptersPage() {
   const handleDeleteClick = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus chapter ini? Hubungan dengan kata (Word) akan diatur menjadi NULL.")) return;
 
+    setErrorMsg("");
+    setSuccessMsg("");
+
     try {
       const res = await fetch(`/api/admin/chapters?id=${id}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        if (editingId === id) {
-          handleCancelEdit();
-        }
-        loadChapters();
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Gagal menghapus chapter");
+        return;
       }
+
+      setSuccessMsg("Chapter berhasil dihapus!");
+      if (editingId === id) {
+        handleCancelEdit();
+      }
+      loadChapters();
     } catch (e) {
       console.error(e);
+      setErrorMsg("Gagal menghapus chapter");
     }
   };
 

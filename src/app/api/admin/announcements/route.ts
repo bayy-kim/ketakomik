@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-guard";
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
-    let announcements: unknown[] = [];
-    try {
-      announcements = await db.announcement.findMany({
-        orderBy: { startAt: "desc" },
-      });
-    } catch {
-      // Prisma fallback
-    }
+    const announcements = await db.announcement.findMany({
+      orderBy: { startAt: "desc" },
+    });
     return NextResponse.json({ announcements });
   } catch (error) {
     console.error("Error fetching announcements:", error);
@@ -19,6 +18,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
     const { message, isActive, endAt } = await request.json();
 
@@ -26,18 +28,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Pesan pengumuman wajib diisi" }, { status: 400 });
     }
 
-    try {
-      const announcement = await db.announcement.create({
-        data: {
-          message,
-          isActive: isActive ?? true,
-          endAt: endAt ? new Date(endAt) : null,
-        },
-      });
-      return NextResponse.json({ success: true, announcement });
-    } catch {
-      return NextResponse.json({ success: true, announcement: { id: `ann-${Date.now()}`, message } });
-    }
+    const announcement = await db.announcement.create({
+      data: {
+        message,
+        isActive: isActive ?? true,
+        endAt: endAt ? new Date(endAt) : null,
+      },
+    });
+    return NextResponse.json({ success: true, announcement });
   } catch (error) {
     console.error("Error creating announcement:", error);
     return NextResponse.json({ error: "Gagal menyimpan pengumuman" }, { status: 500 });
@@ -45,6 +43,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
     const { id, message, isActive, endAt } = await request.json();
 
@@ -52,19 +53,15 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "ID dan Pesan pengumuman wajib diisi" }, { status: 400 });
     }
 
-    try {
-      const announcement = await db.announcement.update({
-        where: { id },
-        data: {
-          message,
-          isActive: isActive ?? true,
-          endAt: endAt ? new Date(endAt) : null,
-        },
-      });
-      return NextResponse.json({ success: true, announcement });
-    } catch {
-      return NextResponse.json({ success: true });
-    }
+    const announcement = await db.announcement.update({
+      where: { id },
+      data: {
+        message,
+        isActive: isActive ?? true,
+        endAt: endAt ? new Date(endAt) : null,
+      },
+    });
+    return NextResponse.json({ success: true, announcement });
   } catch (error) {
     console.error("Error updating announcement:", error);
     return NextResponse.json({ error: "Gagal memperbarui pengumuman" }, { status: 500 });
@@ -72,6 +69,9 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -80,14 +80,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "ID pengumuman wajib diisi!" }, { status: 400 });
     }
 
-    try {
-      await db.announcement.delete({
-        where: { id },
-      });
-      return NextResponse.json({ success: true });
-    } catch {
-      return NextResponse.json({ success: true });
-    }
+    await db.announcement.delete({
+      where: { id },
+    });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting announcement:", error);
     return NextResponse.json({ error: "Gagal menghapus pengumuman" }, { status: 500 });

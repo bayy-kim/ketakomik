@@ -1,29 +1,19 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-guard";
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
   try {
-    let gameSessions: {
-      id: string;
-      attemptsUsed: number;
-      won: boolean;
-      mode: string;
-      completedAt: Date;
-      word: { id: string; text: string; scheduledDate: Date };
-    }[] = [];
+    const gameSessions = await db.gameSession.findMany({
+      include: {
+        word: { select: { id: true, text: true, scheduledDate: true } },
+      },
+      orderBy: { completedAt: "desc" },
+    });
 
-    try {
-      gameSessions = await db.gameSession.findMany({
-        include: {
-          word: { select: { id: true, text: true, scheduledDate: true } },
-        },
-        orderBy: { completedAt: "desc" },
-      });
-    } catch (e) {
-      console.error("Prisma analytics fetch error:", e);
-    }
-
-    // 1. Calculate Real DAU / WAU for last 7 days
     const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const now = new Date();
     const dauWauMap: Record<string, { day: string; DAU: number; WAU: number }> = {};
@@ -36,11 +26,9 @@ export async function GET() {
       dauWauMap[dateKey] = { day: dayName, DAU: 0, WAU: 0 };
     }
 
-    // 2. Mode Distribution (Real Count)
     let normalCount = 0;
     let voiceCount = 0;
 
-    // 3. Attempt Distribution (Real Count 1x to 6x & Failed)
     const attemptsCountMap: Record<string, number> = {
       "1x Coba": 0,
       "2x Coba": 0,
@@ -51,7 +39,6 @@ export async function GET() {
       "Gagal": 0,
     };
 
-    // 4. Word Performance Tracking (Real Win Rates & Flagging)
     const wordStatsMap: Record<
       string,
       {
@@ -65,21 +52,18 @@ export async function GET() {
     > = {};
 
     gameSessions.forEach((s) => {
-      // DAU / WAU calculation
       const dateKey = s.completedAt.toISOString().split("T")[0];
       if (dauWauMap[dateKey]) {
         dauWauMap[dateKey].DAU += 1;
         dauWauMap[dateKey].WAU += 1;
       }
 
-      // Mode split
       if (s.mode === "HARDCORE_VOICE") {
         voiceCount++;
       } else {
         normalCount++;
       }
 
-      // Attempt distribution
       if (s.won) {
         const key = `${s.attemptsUsed}x Coba`;
         if (attemptsCountMap[key] !== undefined) {
@@ -89,7 +73,6 @@ export async function GET() {
         attemptsCountMap["Gagal"] += 1;
       }
 
-      // Word stats
       if (s.word) {
         const wId = s.word.id;
         if (!wordStatsMap[wId]) {
@@ -124,7 +107,7 @@ export async function GET() {
     }[] = [];
 
     Object.values(wordStatsMap).forEach((w) => {
-      if (w.totalPlayed >= 5) { // Only flag if played at least 5 times
+      if (w.totalPlayed >= 5) {
         const winRate = Math.round((w.totalWon / w.totalPlayed) * 100);
         const attempt1Rate = Math.round((w.attempt1Won / w.totalPlayed) * 100);
 

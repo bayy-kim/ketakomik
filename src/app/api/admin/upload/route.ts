@@ -1,28 +1,32 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { requireAdmin } from "@/lib/auth-guard";
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (!guard.authorized) return guard.response;
+
+  const body = (await request.json()) as HandleUploadBody;
+
   try {
-    const { searchParams } = new URL(request.url);
-    const filename = searchParams.get("filename") || `comic-panel-${Date.now()}.png`;
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async () => {
+        return {
+          allowedContentTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+        };
+      },
+      onUploadCompleted: async ({ blob }) => {
+        console.log("Uploaded comic panel blob:", blob.url);
+      },
+    });
 
-    if (!request.body) {
-      return NextResponse.json({ error: "File data kosong" }, { status: 400 });
-    }
-
-    try {
-      const blob = await put(filename, request.body, {
-        access: "public",
-      });
-      return NextResponse.json(blob);
-    } catch {
-      // Fallback placeholder image url if Vercel blob token is not yet configured in local env
-      return NextResponse.json({
-        url: "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=800&auto=format&fit=crop&q=80",
-      });
-    }
+    return NextResponse.json(jsonResponse);
   } catch (error) {
-    console.error("Error uploading file to Vercel Blob:", error);
-    return NextResponse.json({ error: "Gagal mengunggah file gambar" }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 400 }
+    );
   }
 }

@@ -25,27 +25,27 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tekakomik.vercel.app"),
-  title: "Tekakonik — Game Tebak Kata Harian Komik Modern",
+  title: "Tekakomik — Game Tebak Kata Harian Komik Modern",
   description: "Bantu Kapten Klu dan selidiki trik Bayangan dalam game tebak kata harian bergaya komik modern!",
-  applicationName: "Tekakonik",
+  applicationName: "Tekakomik",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Tekakonik",
+    title: "Tekakomik",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: "website",
-    siteName: "Tekakonik",
-    title: "Tekakonik — Game Tebak Kata Harian Komik Modern",
+    siteName: "Tekakomik",
+    title: "Tekakomik — Game Tebak Kata Harian Komik Modern",
     description: "Bantu Kapten Klu dan selidiki trik Bayangan dalam game tebak kata harian bergaya komik modern!",
     url: "https://tekakomik.vercel.app",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tekakonik — Game Tebak Kata Harian Komik Modern",
+    title: "Tekakomik — Game Tebak Kata Harian Komik Modern",
     description: "Bantu Kapten Klu dan selidiki trik Bayangan dalam game tebak kata harian bergaya komik modern!",
   },
 };

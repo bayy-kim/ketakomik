@@ -7,33 +7,30 @@ export async function GET(request: Request) {
     const mode = searchParams.get("mode") === "HARDCORE_VOICE" ? "HARDCORE_VOICE" : "NORMAL";
     const period = searchParams.get("period") || "alltime";
 
-    interface DbSessionItem {
-      id: string;
-      attemptsUsed: number;
-      durationSeconds: number;
-      score: number;
-      mode: string;
-      anonId: string | null;
-      user: { username: string; avatarSeed: string; currentStreak: number } | null;
+    const now = new Date();
+    let dateFilter: { gte?: Date } = {};
+
+    if (period === "daily") {
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      dateFilter = { gte: startOfDay };
+    } else if (period === "weekly") {
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      dateFilter = { gte: sevenDaysAgo };
     }
 
-    let sessions: DbSessionItem[] = [];
-    try {
-      sessions = await db.gameSession.findMany({
-        where: {
-          won: true,
-          mode: mode as "NORMAL" | "HARDCORE_VOICE",
-        },
-        include: {
-          user: { select: { username: true, avatarSeed: true, currentStreak: true } },
-          word: { select: { scheduledDate: true } },
-        },
-        orderBy: [{ score: "desc" }, { attemptsUsed: "asc" }, { durationSeconds: "asc" }],
-        take: 50,
-      });
-    } catch {
-      // Prisma fallback
-    }
+    const sessions = await db.gameSession.findMany({
+      where: {
+        won: true,
+        mode: mode as "NORMAL" | "HARDCORE_VOICE",
+        ...(period !== "alltime" ? { completedAt: dateFilter } : {}),
+      },
+      include: {
+        user: { select: { username: true, avatarSeed: true, currentStreak: true } },
+        word: { select: { scheduledDate: true } },
+      },
+      orderBy: [{ score: "desc" }, { attemptsUsed: "asc" }, { durationSeconds: "asc" }],
+      take: 50,
+    });
 
     if (!sessions || sessions.length === 0) {
       return NextResponse.json({ leaderboard: [], mode, period, isEmpty: true });

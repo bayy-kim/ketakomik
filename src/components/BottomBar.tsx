@@ -71,7 +71,7 @@ export function BottomBar() {
   const handleLinkClick = (e: React.MouseEvent, item: typeof menuItems[0]) => {
     if (item.isProtected && !isLoggedIn) {
       e.preventDefault();
-      alert("🔒 Kamu harus Login terlebih dahulu untuk mengakses menu ini!");
+      window.location.href = "/auth/login";
     }
   };
 

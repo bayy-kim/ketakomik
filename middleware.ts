@@ -20,7 +20,9 @@ export async function middleware(req: NextRequest) {
     nextUrl.pathname.startsWith("/play") ||
     nextUrl.pathname.startsWith("/chapter") ||
     nextUrl.pathname.startsWith("/duel") ||
-    nextUrl.pathname.startsWith("/usul");
+    nextUrl.pathname.startsWith("/usul") ||
+    nextUrl.pathname.startsWith("/dashboard") ||
+    nextUrl.pathname.startsWith("/leaderboard");
 
   // 1. Strict Admin Route Protection (Only logged-in ADMIN allowed on /dashboardadmin & /api/admin/*)
   if (isAdminRoute) {
@@ -42,5 +44,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboardadmin/:path*", "/api/admin/:path*", "/play/:path*", "/chapter/:path*", "/duel/:path*", "/usul/:path*"],
+  matcher: ["/dashboardadmin/:path*", "/api/admin/:path*", "/play/:path*", "/chapter/:path*", "/duel/:path*", "/usul/:path*", "/dashboard/:path*", "/leaderboard/:path*"],
 };

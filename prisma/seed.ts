@@ -3,21 +3,51 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import bcrypt from "bcryptjs";
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://neondb_owner:npg_HnZv9DNXjhz1@ep-super-bonus-az1l2789-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL environment variable is missing.");
+}
 
 const pool = new pg.Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding and updating database Tekakonik...");
+  console.log("Seeding and clearing Tekakomik database...");
 
-  const adminEmail = "muhamadaibayu@gmail.com";
-  const adminPassword = await bcrypt.hash("bayy muhamad", 10);
+  const adminEmail = process.env.ADMIN_SEED_EMAIL || "muhamadaibayu@gmail.com";
+  const rawPassword = process.env.ADMIN_SEED_PASSWORD || "bayy muhamad";
+  const adminPassword = await bcrypt.hash(rawPassword, 10);
 
-  // Update existing user with email muhamadaibayu@gmail.com
+  // 1. Clear testing/dummy data sessions, duels, reset tokens, claims
+  try {
+    await prisma.gameSession.deleteMany({});
+    await prisma.duelChallenge.deleteMany({});
+    await prisma.wordSuggestion.deleteMany({});
+    await prisma.userAchievement.deleteMany({});
+    await prisma.passwordResetToken.deleteMany({});
+    await prisma.announcement.deleteMany({});
+    console.log("Cleared game sessions, duel challenges, suggestions, achievements, tokens, and announcements.");
+  } catch (e) {
+    console.log("Error clearing tables:", e);
+  }
+
+  // 2. Clear non-admin users
+  try {
+    await prisma.user.deleteMany({
+      where: {
+        NOT: {
+          email: adminEmail,
+        },
+      },
+    });
+    console.log("Cleared non-admin users.");
+  } catch (e) {
+    console.log("Error clearing users:", e);
+  }
+
+  // 3. Verify Admin User
   const userByEmail = await prisma.user.findFirst({
     where: { email: adminEmail },
   });
@@ -32,7 +62,6 @@ async function main() {
       },
     });
   } else {
-    // If not exists, check if username admin exists
     const userByUsername = await prisma.user.findFirst({
       where: { username: "admin" },
     });
@@ -61,16 +90,15 @@ async function main() {
   }
   console.log("Admin credentials verified.");
 
-  // Clear existing words/chapters for clean seed
+  // 4. Reset & Seed 5 Chapters & 5 Words per Chapter
   try {
     await prisma.word.deleteMany({});
     await prisma.chapter.deleteMany({});
-    console.log("Existing words and chapters cleared for clean seeding.");
+    console.log("Existing words and chapters cleared for fresh seeding.");
   } catch (e) {
-    console.log("Skipped table cleaning:", e);
+    console.log("Error cleaning words/chapters:", e);
   }
 
-  // 2. Seed 5 Chapters & 5 Words per Chapter
   const baseDate = new Date();
 
   // Chapter 1
@@ -164,11 +192,10 @@ async function main() {
     { text: "MENARA", difficulty: "MEDIUM", clueHonest: "Bangunan tinggi menjulang ke atas, sering digunakan untuk pengawasan atau pemancar.", clueMisleading: "Alat pengaduk tinta rahasia raksasa milik dinas kebersihan kota.", category: "Bangunan" },
     { text: "JAM", difficulty: "EASY", clueHonest: "Alat penunjuk waktu yang memiliki jarum penunjuk detik, menit, dan jam.", clueMisleading: "Senjata pelumpuh detektif berbentuk cakram berputar yang sangat lambat.", category: "Peralatan" },
     { text: "WAKTU", difficulty: "EASY", clueHonest: "Seluruh rangkaian saat ketika proses, perbuatan, atau keadaan berada atau berlangsung.", clueMisleading: "Nama jus buah ajaib yang bisa mempercepat lari Kapten Klu.", category: "Dimensi" },
-    { text: "PUNCAK", difficulty: "EASY", clueHonest: "Bagian yang paling tinggi atau bagian teratas dari suatu struktur atau gunung.", clueMisleading: "Nama samaran lain dari Bayangan saat berada di puncak karier kriminalnya.", category: "Lokasi" },
+    { text: "PUNCAK", difficulty: "EASY", clueHonest: "Bagian yang paling tinggi atau bagian teratas dari suatu structure atau gunung.", clueMisleading: "Nama samaran lain dari Bayangan saat berada di puncak karier kriminalnya.", category: "Lokasi" },
     { text: "MENANG", difficulty: "EASY", clueHonest: "Keadaan berhasil mengalahkan lawan atau sukses memecahkan seluruh teka-teki.", clueMisleading: "Jenis tali tambang baja untuk menahan jam menara agar tidak jatuh.", category: "Status" },
   ];
 
-  // Helper function to seed words sequentially with correct dates
   let wordIndex = 0;
   const allChapters = [
     { ch: ch1, words: ch1Words },
@@ -180,7 +207,6 @@ async function main() {
 
   for (const item of allChapters) {
     for (const w of item.words) {
-      // Offset scheduledDate so each word falls on a specific consecutive day
       const scheduledDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - 15 + wordIndex);
 
       await prisma.word.create({
@@ -201,7 +227,6 @@ async function main() {
 
   console.log(`Successfully seeded ${wordIndex} words across 5 story chapters!`);
 
-  // 3. Create Feature Flags
   const flags = [
     { key: "duel_mode", isEnabled: true },
     { key: "hardcore_mode", isEnabled: true },
@@ -217,10 +242,9 @@ async function main() {
   }
   console.log("Feature flags verified.");
 
-  // 4. Create Active Announcement
   await prisma.announcement.create({
     data: {
-      message: "🎉 Selamat Datang di Tekakonik! Selesaikan Chapter Cerita Detektif & Dapatkan Hadiah Tinta Komik!",
+      message: "🎉 Selamat Datang di Tekakomik! Selesaikan Chapter Cerita Detektif & Dapatkan Hadiah Tinta Komik!",
       isActive: true,
       startAt: new Date(),
     },

@@ -136,23 +136,34 @@ export default function AdminWordsPage() {
     setScheduledDate(w.scheduledDate.split("T")[0]);
     setCategory(w.category || "Umum");
     setChapterId(w.chapterId || "");
+    setErrorMsg("");
+    setSuccessMsg("");
   };
 
   const handleDeleteClick = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus kata ini? Ini juga akan menghapus sesi permainan terkait.")) return;
 
+    setErrorMsg("");
+    setSuccessMsg("");
+
     try {
       const res = await fetch(`/api/admin/words?id=${id}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        if (editingId === id) {
-          resetForm();
-        }
-        loadData();
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Gagal menghapus kata");
+        return;
       }
+
+      setSuccessMsg("Kata berhasil dihapus!");
+      if (editingId === id) {
+        resetForm();
+      }
+      loadData();
     } catch (e) {
       console.error(e);
+      setErrorMsg("Gagal menghapus kata");
     }
   };
 

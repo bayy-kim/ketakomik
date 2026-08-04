@@ -1,15 +1,14 @@
-import type { MetadataRoute } from "next";
+import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Tekakonik — Game Tebak Kata Komik Modern",
-    short_name: "Tekakonik",
-    description: "Bantu Kapten Klu dan selidiki trik Bayangan dalam game tebak kata harian bergaya komik modern!",
+    name: "Tekakomik - Game Tebak Kata Komik",
+    short_name: "Tekakomik",
+    description: "Game tebak kata harian bergaya komik modern bersama Kapten Klu & Bayangan!",
     start_url: "/",
     display: "standalone",
     background_color: "#FAF7F0",
-    theme_color: "#FFD200",
-    orientation: "portrait",
+    theme_color: "#2B6CFF",
     icons: [
       {
         src: "/icon-192.svg",
