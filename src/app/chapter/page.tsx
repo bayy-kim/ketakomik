@@ -292,8 +292,6 @@ export default function ChapterPage() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

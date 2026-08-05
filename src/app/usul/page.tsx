@@ -138,8 +138,6 @@ export default function UsulKataPage() {
           )}
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

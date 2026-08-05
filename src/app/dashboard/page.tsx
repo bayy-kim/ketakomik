@@ -20,11 +20,13 @@ import {
   ShieldCheck,
   BookOpen,
   Swords,
-  MessageSquarePlus
+  MessageSquarePlus,
+  FileImage
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import { AchievementCertificateModal } from "@/components/AchievementCertificateModal";
 import {
   BarChart,
   Bar,
@@ -38,12 +40,13 @@ import {
 interface Achievement {
   id: string;
   title: string;
-  category: "KATA" | "WAKTU";
+  category: "KATA" | "WAKTU" | "DUEL" | "TINTA" | "STREAK" | "VOICE";
   target: number;
   currentProgress: number;
   rewardTinta: number;
   iconEmoji: string;
   description: string;
+  funnyCertificateText: string;
   isUnlocked: boolean;
   isClaimed: boolean;
 }
@@ -106,6 +109,9 @@ export default function UserDashboardPage() {
   const [filterDate, setFilterDate] = useState("");
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Certificate Modal state
+  const [selectedCertAchievement, setSelectedCertAchievement] = useState<Achievement | null>(null);
 
   const fetchDashboardData = async () => {
     try {
@@ -550,11 +556,14 @@ export default function UserDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Claim Action Button */}
+                  {/* Claim Action / Certificate Button */}
                   {ach.isClaimed ? (
-                    <div className="flex items-center justify-center gap-1 bg-emerald-100 comic-border-sm py-1.5 rounded-lg text-xs font-bangers text-emerald-800">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" /> SUDAH DIKLAIM
-                    </div>
+                    <button
+                      onClick={() => setSelectedCertAchievement(ach)}
+                      className="comic-btn text-xs bg-emerald-500 hover:bg-emerald-600 text-white py-2 w-full flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <FileImage className="w-4 h-4" /> CETAK SERTIFIKAT
+                    </button>
                   ) : ach.isUnlocked ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -577,6 +586,14 @@ export default function UserDashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* ===== MODAL CETAK SERTIFIKAT PENCAPAIAN ===== */}
+      <AchievementCertificateModal
+        isOpen={!!selectedCertAchievement}
+        onClose={() => setSelectedCertAchievement(null)}
+        achievement={selectedCertAchievement}
+        username={user?.username || "Detektif"}
+      />
 
       {/* ===== MODAL EDIT PROFIL KOMIK ===== */}
       {showEditProfileModal && (
@@ -684,7 +701,7 @@ export default function UserDashboardPage() {
             <div>
               <h2 className="font-bangers text-2xl text-comic-ink">KONFIRMASI KELUAR AKUN</h2>
               <p className="text-xs font-sans text-gray-700 mt-1">
-                Apakah kamu yakin ingin keluar dari akun Tekakonik?
+                Apakah kamu yakin ingin keluar dari akun Tekakomik?
               </p>
             </div>
 
@@ -705,8 +722,6 @@ export default function UserDashboardPage() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

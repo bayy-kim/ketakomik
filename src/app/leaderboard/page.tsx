@@ -197,8 +197,6 @@ export default function LeaderboardPage() {
           )}
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

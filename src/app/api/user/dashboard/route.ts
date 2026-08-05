@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
+import { ACHIEVEMENTS_LIST } from "@/lib/achievements";
 
 export async function GET(request: Request) {
   try {
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
       durationSeconds: number;
       completedAt: Date;
       mode: string;
+      isDuel: boolean;
     }[] = [];
     let claimedAchievements: { achievementId: string }[] = [];
 
@@ -70,10 +72,11 @@ export async function GET(request: Request) {
         },
       });
 
+      // Ambil game sessions reguler (non-duel) untuk statistik
       gameSessions = await db.gameSession.findMany({
         where: {
           userId,
-          isDuel: false, // EXCLUDE duel game sessions from stats
+          isDuel: false,
           ...(hasFilter ? { completedAt: dateFilter } : {}),
         },
         orderBy: { completedAt: "desc" },
@@ -84,6 +87,7 @@ export async function GET(request: Request) {
           durationSeconds: true,
           completedAt: true,
           mode: true,
+          isDuel: true,
         },
       });
 
@@ -93,6 +97,22 @@ export async function GET(request: Request) {
       });
     } catch (e) {
       console.error("Dashboard query error:", e);
+    }
+
+    // Ambil total semua game session untuk progress achievements
+    let allGameSessions: { won: boolean; mode: string; durationSeconds: number }[] = [];
+    let totalDuels = 0;
+    try {
+      allGameSessions = await db.gameSession.findMany({
+        where: { userId },
+        select: { won: true, mode: true, durationSeconds: true },
+      });
+
+      totalDuels = await db.gameSession.count({
+        where: { userId, isDuel: true },
+      });
+    } catch (e) {
+      console.error("Failed to query progress metrics:", e);
     }
 
     const claimedSet = new Set(claimedAchievements.map((a) => a.achievementId));
@@ -124,118 +144,31 @@ export async function GET(request: Request) {
     });
 
     const avgAttempts = totalPlayed > 0 ? (totalAttemptsCalc / totalPlayed).toFixed(1) : "0.0";
-
     const dailyAnalytics = Object.values(dailyAnalyticsMap);
 
-    // Achievement Definitions (Word Milestones & Time Milestones)
-    const achievementsList = [
-      // Word Answered Milestones
-      {
-        id: "ach_words_25",
-        title: "Penebak Pemula",
-        category: "KATA",
-        target: 25,
-        currentProgress: totalWon,
-        rewardTinta: 50,
-        iconEmoji: "🥉",
-        description: "Menjawab 25 Kata Rahasia dengan Benar",
-      },
-      {
-        id: "ach_words_50",
-        title: "Penebak Rajin",
-        category: "KATA",
-        target: 50,
-        currentProgress: totalWon,
-        rewardTinta: 100,
-        iconEmoji: "🥈",
-        description: "Menjawab 50 Kata Rahasia dengan Benar",
-      },
-      {
-        id: "ach_words_75",
-        title: "Detektif Berbakat",
-        category: "KATA",
-        target: 75,
-        currentProgress: totalWon,
-        rewardTinta: 150,
-        iconEmoji: "🥇",
-        description: "Menjawab 75 Kata Rahasia dengan Benar",
-      },
-      {
-        id: "ach_words_100",
-        title: "Pecah Teka-Teki",
-        category: "KATA",
-        target: 100,
-        currentProgress: totalWon,
-        rewardTinta: 200,
-        iconEmoji: "🎖️",
-        description: "Menjawab 100 Kata Rahasia dengan Benar",
-      },
-      {
-        id: "ach_words_125",
-        title: "Ahli Komik",
-        category: "KATA",
-        target: 125,
-        currentProgress: totalWon,
-        rewardTinta: 250,
-        iconEmoji: "👑",
-        description: "Menjawab 125 Kata Rahasia dengan Benar",
-      },
-      {
-        id: "ach_words_150",
-        title: "Legenda Tekakonik",
-        category: "KATA",
-        target: 150,
-        currentProgress: totalWon,
-        rewardTinta: 300,
-        iconEmoji: "⚡",
-        description: "Menjawab 150 Kata Rahasia dengan Benar",
-      },
-      // Total Playtime Milestones (seconds)
-      {
-        id: "ach_time_15m",
-        title: "Detektif Kilat",
-        category: "WAKTU",
-        target: 900, // 15 mins = 900s
-        currentProgress: totalDurationSeconds,
-        rewardTinta: 30,
-        iconEmoji: "⏱️",
-        description: "Akumulasi Waktu Bermain 15 Menit",
-      },
-      {
-        id: "ach_time_30m",
-        title: "Fokus Tinggi",
-        category: "WAKTU",
-        target: 1800, // 30 mins = 1800s
-        currentProgress: totalDurationSeconds,
-        rewardTinta: 60,
-        iconEmoji: "🧠",
-        description: "Akumulasi Waktu Bermain 30 Menit",
-      },
-      {
-        id: "ach_time_1h",
-        title: "Penyelidik Jam-Jaman",
-        category: "WAKTU",
-        target: 3600, // 1 hour = 3600s
-        currentProgress: totalDurationSeconds,
-        rewardTinta: 120,
-        iconEmoji: "⏳",
-        description: "Akumulasi Waktu Bermain 1 Jam",
-      },
-      {
-        id: "ach_time_2h",
-        title: "Detektif Tanpa Lelah",
-        category: "WAKTU",
-        target: 7200, // 2 hours = 7200s
-        currentProgress: totalDurationSeconds,
-        rewardTinta: 250,
-        iconEmoji: "🔥",
-        description: "Akumulasi Waktu Bermain 2 Jam",
-      },
-    ].map((ach) => ({
-      ...ach,
-      isUnlocked: ach.currentProgress >= ach.target,
-      isClaimed: claimedSet.has(ach.id),
-    }));
+    // Hitung progress global untuk pencapaian
+    const totalWonGlobal = allGameSessions.filter(s => s.won).length;
+    const totalPlaytimeGlobal = allGameSessions.reduce((acc, s) => acc + s.durationSeconds, 0);
+    const totalVoiceWins = allGameSessions.filter(s => s.won && s.mode === "HARDCORE_VOICE").length;
+    const currentStreak = user?.currentStreak || 0;
+    const tintaSpent = user?.tintaSpent || 0;
+
+    const achievementsList = ACHIEVEMENTS_LIST.map((ach) => {
+      let progress = 0;
+      if (ach.category === "KATA") progress = totalWonGlobal;
+      else if (ach.category === "WAKTU") progress = totalPlaytimeGlobal;
+      else if (ach.category === "DUEL") progress = totalDuels;
+      else if (ach.category === "TINTA") progress = tintaSpent;
+      else if (ach.category === "VOICE") progress = totalVoiceWins;
+      else if (ach.category === "STREAK") progress = currentStreak;
+
+      return {
+        ...ach,
+        currentProgress: progress,
+        isUnlocked: progress >= ach.target,
+        isClaimed: claimedSet.has(ach.id),
+      };
+    });
 
     return NextResponse.json({
       user: {

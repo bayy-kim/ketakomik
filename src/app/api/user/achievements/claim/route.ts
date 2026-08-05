@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { ACHIEVEMENTS_LIST } from "@/lib/achievements";
 
 export async function POST(request: Request) {
   try {
@@ -16,20 +17,6 @@ export async function POST(request: Request) {
     if (!achievementId) {
       return NextResponse.json({ error: "ID Pencapaian wajib diisi" }, { status: 400 });
     }
-
-    // Verify achievement exists and matches definitions
-    const ACHIEVEMENTS_LIST = [
-      { id: "word_1", title: "Detektif Pemula", target: 1, rewardTinta: 15, category: "KATA" },
-      { id: "word_5", title: "Pengumpul Bukti", target: 5, rewardTinta: 30, category: "KATA" },
-      { id: "word_10", title: "Penyidik Berbakat", target: 10, rewardTinta: 50, category: "KATA" },
-      { id: "word_25", title: "Pecah Kasus", target: 25, rewardTinta: 75, category: "KATA" },
-      { id: "word_50", title: "Sherlock Modern", target: 50, rewardTinta: 100, category: "KATA" },
-      { id: "word_100", title: "Legenda Sleuth", target: 100, rewardTinta: 200, category: "KATA" },
-      { id: "time_60", title: "Kilat Analisis", target: 60, rewardTinta: 25, category: "WAKTU" }, // di bawah 60s
-      { id: "time_30", title: "Kecepatan Cahaya", target: 30, rewardTinta: 50, category: "WAKTU" }, // di bawah 30s
-      { id: "time_15", title: "Insting Murni", target: 15, rewardTinta: 100, category: "WAKTU" }, // di bawah 15s
-      { id: "streak_7", title: "Streak Master", target: 7, rewardTinta: 80, category: "KATA" }, // streak 7 hari
-    ];
 
     const achDef = ACHIEVEMENTS_LIST.find((a) => a.id === achievementId);
     if (!achDef) {

@@ -12,6 +12,7 @@ export default function DuelLandingPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -71,6 +72,23 @@ export default function DuelLandingPage() {
         message={errorMsg}
       />
 
+      {/* Comic Modal for Duel Guide & Rules */}
+      <ComicModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        title="PANDUAN & ATURAN DUEL 1V1"
+        type="info"
+        message="Selamat datang di Arena Duel Asinkron Tekakomik!
+        
+Aturan dan Cara Bermain Duel:
+1. Buat Duel baru atau masukkan 6-digit kode room temanmu untuk bergabung.
+2. Kedua pemain akan menebak kata rahasia yang SAMA persis.
+3. Permainan duel dibatasi waktu 120 Detik (Hitung Mundur) semenjak kamu mulai mengetik!
+4. Duel ini bersifat asinkron; kamu bisa bermain duluan, lalu membagikan kodenya ke temanmu untuk menyusul bermain.
+5. Setelah kedua pemain selesai bermain, skor komik akhir akan dibandingkan bersandingan dalam 2 Panel Komik, dan pemenangnya akan ditahbiskan di atas!
+6. Game duel TIDAK AKAN menambah perolehan Streak Harian atau kueri grafik statistik utama di Dashboard pribadimu agar persaingan tetap adil."
+      />
+
       <main className="flex-1 max-w-xl mx-auto w-full px-3 py-8 flex flex-col items-center justify-center">
         <div className="bg-white comic-border p-6 rounded-xl comic-shadow-lg w-full flex flex-col items-center gap-6 text-center">
           {/* Header Icon */}
@@ -83,6 +101,12 @@ export default function DuelLandingPage() {
             <p className="text-xs sm:text-sm font-sans text-gray-700 mt-1">
               Tantang temanmu menebak kata yang SAMA dengan batasan waktu 120 Detik! Hasil tebakan akan otomatis tercatat di Papan Peringkat (Leaderboard).
             </p>
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className="mt-2 text-xs font-sans font-bold text-comic-klu underline hover:text-blue-700 flex items-center justify-center gap-1 mx-auto"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" /> BACA PANDUAN & ATURAN DUEL
+            </button>
           </div>
 
           {/* Join Duel Section */}

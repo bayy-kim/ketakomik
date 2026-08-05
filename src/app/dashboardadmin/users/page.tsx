@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, ShieldAlert, Ban, ShieldCheck, Search, ShieldX, Calendar } from "lucide-react";
+import { User, ShieldAlert, Ban, ShieldCheck, Search, ShieldX, Calendar, Droplet, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface UserItem {
@@ -26,6 +26,13 @@ export default function AdminUsersPage() {
   const [bannedUntil, setBannedUntil] = useState("");
   const [showBanModal, setShowBanModal] = useState(false);
 
+  // Give Tinta Form States
+  const [giveTintaEmail, setGiveTintaEmail] = useState("");
+  const [giveTintaAmount, setGiveTintaAmount] = useState(50);
+  const [givingTinta, setGivingTinta] = useState(false);
+  const [tintaSuccessMsg, setTintaSuccessMsg] = useState("");
+  const [tintaErrorMsg, setTintaErrorMsg] = useState("");
+
   const loadUsers = async () => {
     setLoading(true);
     try {
@@ -44,6 +51,45 @@ export default function AdminUsersPage() {
   useEffect(() => {
     loadUsers();
   }, []);
+
+  const handleGiveTinta = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!giveTintaEmail || giveTintaAmount <= 0) {
+      setTintaErrorMsg("Isi username/email dan jumlah tinta secara lengkap!");
+      return;
+    }
+
+    setGivingTinta(true);
+    setTintaSuccessMsg("");
+    setTintaErrorMsg("");
+
+    try {
+      const res = await fetch("/api/admin/users/give-tinta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailOrUsername: giveTintaEmail.trim(),
+          tintaAmount: giveTintaAmount,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setTintaErrorMsg(data.error || "Gagal mengirim tinta");
+        return;
+      }
+
+      setTintaSuccessMsg(data.message || "Tinta berhasil dikirim!");
+      setGiveTintaEmail("");
+      setGiveTintaAmount(50);
+      loadUsers();
+    } catch (err) {
+      console.error(err);
+      setTintaErrorMsg("Koneksi bermasalah!");
+    } finally {
+      setGivingTinta(false);
+    }
+  };
 
   const handleToggleBan = async (userId: string, currentBanned: boolean) => {
     if (!currentBanned) {
@@ -120,6 +166,53 @@ export default function AdminUsersPage() {
         <p className="text-xs font-sans text-gray-700">
           Ban secara permanen atau suspend dengan jangka waktu tertentu. Akun yang dibanned/suspend disembunyikan dari Leaderboard.
         </p>
+      </div>
+
+      {/* GIVE TINTA TO USER FORM */}
+      <div className="bg-white comic-border p-5 rounded-xl comic-shadow">
+        <h2 className="font-bangers text-xl text-comic-ink mb-2 flex items-center gap-1.5">
+          <Droplet className="w-5 h-5 text-comic-klu fill-comic-klu" /> KIRIM HADIAH TINTA KE PENGGUNA
+        </h2>
+        <p className="text-xs font-sans text-gray-600 mb-3">
+          Masukkan Email atau Username pengguna. Sistem akan melakukan sinkronisasi pencarian otomatis terlebih dahulu sebelum menambah Tinta.
+        </p>
+
+        {tintaErrorMsg && <div className="bg-red-100 comic-border-sm p-2 rounded text-xs font-bold text-red-600 mb-3">{tintaErrorMsg}</div>}
+        {tintaSuccessMsg && <div className="bg-green-100 comic-border-sm p-2 rounded text-xs font-bold text-emerald-700 mb-3">{tintaSuccessMsg}</div>}
+
+        <form onSubmit={handleGiveTinta} className="flex flex-col sm:flex-row items-end gap-3 text-xs font-sans">
+          <div className="flex flex-col gap-1 flex-1 w-full">
+            <label className="font-bangers text-sm text-comic-ink">USERNAME / EMAIL PENGGUNA:</label>
+            <input
+              type="text"
+              required
+              placeholder="Contoh: detektif@gmail.com atau DetektifSuper"
+              value={giveTintaEmail}
+              onChange={(e) => setGiveTintaEmail(e.target.value)}
+              className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-sm text-comic-ink"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1 sm:w-36 w-full">
+            <label className="font-bangers text-sm text-comic-ink">JUMLAH TINTA:</label>
+            <input
+              type="number"
+              required
+              min={1}
+              value={giveTintaAmount}
+              onChange={(e) => setGiveTintaAmount(Number(e.target.value))}
+              className="bg-gray-50 comic-border px-3 py-2 rounded font-bangers text-base text-comic-ink"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={givingTinta}
+            className="comic-btn bg-comic-yellow text-comic-ink py-2.5 px-5 w-full sm:w-auto shrink-0 flex items-center justify-center gap-1"
+          >
+            <Plus className="w-4 h-4" /> {givingTinta ? "Mengirim..." : "KIRIM TINTA"}
+          </button>
+        </form>
       </div>
 
       {/* SEARCH BAR */}

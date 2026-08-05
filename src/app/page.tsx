@@ -11,6 +11,7 @@ import {
 import { LandingSimulationGrid } from "@/components/LandingSimulationGrid";
 import { LandingFaqAccordion } from "@/components/LandingFaqAccordion";
 import { FloatingHeroEmojis } from "@/components/FloatingHeroEmojis";
+import { LandingGuideButton } from "@/components/LandingGuideButton";
 
 export const metadata = {
   title: "Tekakomik - Game Tebak Kata Harian Komik",
@@ -99,6 +100,8 @@ export default function LandingPage() {
               <p className="font-sans text-xs sm:text-base text-gray-800 max-w-lg leading-relaxed">
                 Dampingi <strong className="text-comic-klu">Kapten Klu</strong> dengan petunjuk 100% jujur, dan selidiki trik lucu dari <strong className="text-comic-bayangan">Bayangan</strong>! Tebak kata rahasia setiap hari dan kumpulkan Tinta.
               </p>
+
+              <LandingGuideButton />
 
               {/* Character Cards */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md my-1">
