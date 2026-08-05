@@ -28,7 +28,7 @@ export async function GET(request: Request) {
         },
       },
       include: {
-        user: { select: { username: true, avatarSeed: true, currentStreak: true } },
+        user: { select: { username: true, avatarSeed: true, avatarUrl: true, currentStreak: true } },
         word: { select: { scheduledDate: true } },
       },
       orderBy: [{ score: "desc" }, { attemptsUsed: "asc" }, { durationSeconds: "asc" }],
@@ -55,6 +55,7 @@ export async function GET(request: Request) {
         badge,
         streak: s.user?.currentStreak || 1,
         avatarSeed: s.user?.avatarSeed || "klu_fan",
+        avatarUrl: s.user?.avatarUrl || null,
       };
     });
 

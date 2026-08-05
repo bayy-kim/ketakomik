@@ -16,6 +16,7 @@ export async function GET() {
         role: true,
         isBanned: true,
         banReason: true,
+        bannedUntil: true,
         createdAt: true,
       },
     });
@@ -32,7 +33,7 @@ export async function PATCH(request: Request) {
   if (!guard.authorized) return guard.response;
 
   try {
-    const { userId, isBanned, banReason } = await request.json();
+    const { userId, isBanned, banReason, bannedUntil } = await request.json();
 
     if (!userId) {
       return NextResponse.json({ error: "User ID wajib diisi" }, { status: 400 });
@@ -43,6 +44,7 @@ export async function PATCH(request: Request) {
       data: {
         isBanned,
         banReason: isBanned ? banReason || "Melanggar peraturan komunitas" : null,
+        bannedUntil: isBanned && bannedUntil ? new Date(bannedUntil) : null,
       },
     });
 

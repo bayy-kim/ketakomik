@@ -19,8 +19,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ room
     // Ambil detail game session untuk pembuat duel & lawan duel
     // creatorSessionId & opponentSessionId menyimpan ID User (NextAuth)
     const [creatorUser, opponentUser] = await Promise.all([
-      db.user.findUnique({ where: { id: duel.creatorSessionId }, select: { username: true, avatarSeed: true } }),
-      duel.opponentSessionId ? db.user.findUnique({ where: { id: duel.opponentSessionId }, select: { username: true, avatarSeed: true } }) : Promise.resolve(null),
+      db.user.findUnique({ where: { id: duel.creatorSessionId }, select: { username: true, avatarSeed: true, avatarUrl: true } }),
+      duel.opponentSessionId ? db.user.findUnique({ where: { id: duel.opponentSessionId }, select: { username: true, avatarSeed: true, avatarUrl: true } }) : Promise.resolve(null),
     ]);
 
     const [creatorGameSession, opponentGameSession] = await Promise.all([
@@ -52,9 +52,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ room
       opponentSessionId: duel.opponentSessionId,
       status: duel.status,
       creatorName: creatorUser?.username || "Pemain 1",
-      creatorAvatar: creatorUser?.avatarSeed || "klu_fan",
+      creatorAvatar: creatorUser?.avatarUrl || creatorUser?.avatarSeed || "klu_fan",
       opponentName: opponentUser?.username || "Penantang",
-      opponentAvatar: opponentUser?.avatarSeed || "bayangan_fan",
+      opponentAvatar: opponentUser?.avatarUrl || opponentUser?.avatarSeed || "bayangan_fan",
       creatorSession: creatorGameSession
         ? {
             attemptsUsed: creatorGameSession.attemptsUsed,

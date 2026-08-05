@@ -59,6 +59,8 @@ export async function GET(request: Request) {
           id: true,
           username: true,
           email: true,
+          avatarUrl: true,
+          avatarSeed: true,
           tinta: true,
           tintaSpent: true,
           currentStreak: true,
@@ -71,6 +73,7 @@ export async function GET(request: Request) {
       gameSessions = await db.gameSession.findMany({
         where: {
           userId,
+          isDuel: false, // EXCLUDE duel game sessions from stats
           ...(hasFilter ? { completedAt: dateFilter } : {}),
         },
         orderBy: { completedAt: "desc" },
@@ -238,6 +241,8 @@ export async function GET(request: Request) {
       user: {
         username: user?.username || session.user.name || "Detektif",
         email: user?.email || session.user.email || "",
+        avatarUrl: user?.avatarUrl || null,
+        avatarSeed: user?.avatarSeed || "klu_fan",
         tinta: user?.tinta ?? 50,
         tintaSpent: user?.tintaSpent ?? 0,
         currentStreak: user?.currentStreak ?? 0,

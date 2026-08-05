@@ -13,7 +13,7 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: currentUserId },
-      select: { tinta: true, tintaSpent: true, currentStreak: true, username: true, email: true, avatarSeed: true },
+      select: { tinta: true, tintaSpent: true, currentStreak: true, username: true, email: true, avatarSeed: true, avatarUrl: true },
     });
 
     if (!user) {
@@ -27,6 +27,7 @@ export async function GET() {
       username: user.username,
       email: user.email,
       avatarSeed: user.avatarSeed,
+      avatarUrl: user.avatarUrl,
     });
   } catch (error) {
     console.error("Error getting user status:", error);
@@ -43,7 +44,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized. Anda harus login!" }, { status: 401 });
     }
 
-    const { username, avatarSeed } = await request.json();
+    const { username, avatarSeed, avatarUrl } = await request.json();
 
     if (!username || username.trim().length < 3) {
       return NextResponse.json({ error: "Username minimal 3 karakter!" }, { status: 400 });
@@ -66,6 +67,7 @@ export async function PATCH(request: Request) {
       data: {
         username: username.trim(),
         avatarSeed: avatarSeed || "klu_fan",
+        avatarUrl: avatarUrl || null,
       },
     });
 

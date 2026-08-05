@@ -14,6 +14,8 @@ interface LeaderboardItem {
   mode: string;
   badge?: string;
   streak?: number;
+  avatarSeed: string;
+  avatarUrl?: string | null;
 }
 
 export default function LeaderboardPage() {
@@ -148,6 +150,17 @@ export default function LeaderboardPage() {
                     >
                       #{item.rank}
                     </div>
+
+                    {/* Render Avatar/Custom Profile Photo in Leaderboard list */}
+                    {item.avatarUrl ? (
+                      <div className="w-10 h-10 rounded-full overflow-hidden comic-border-sm relative shrink-0">
+                        <img src={item.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-comic-yellow comic-border-sm flex items-center justify-center text-xl shrink-0 select-none">
+                        {item.avatarSeed === "klu_fan" ? "🦸‍♂️" : item.avatarSeed === "bayangan_trick" ? "🦹‍♀️" : "🔍"}
+                      </div>
+                    )}
 
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">

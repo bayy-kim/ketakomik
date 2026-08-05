@@ -84,6 +84,8 @@ export async function POST(request: Request) {
 
     // Save GameSession if completed
     if (isGameOver && currentUserId) {
+      const isDuelGame = !!roomCode;
+
       await db.gameSession.create({
         data: {
           wordId: wordDb.id,
@@ -93,32 +95,35 @@ export async function POST(request: Request) {
           won: isWon,
           mode: mode === "HARDCORE_VOICE" ? "HARDCORE_VOICE" : "NORMAL",
           durationSeconds,
-          score,
+          score: isDuelGame ? 0 : score, // Duel games do not contribute to stats score
+          isDuel: isDuelGame,
         },
       });
 
-      // Handle user streak and longestStreak updates
-      const user = await db.user.findUnique({ where: { id: currentUserId } });
-      if (user) {
-        if (isWon) {
-          const newStreak = user.currentStreak + 1;
-          const newLongest = Math.max(user.longestStreak, newStreak);
-          await db.user.update({
-            where: { id: currentUserId },
-            data: {
-              tinta: { increment: tintaEarned },
-              currentStreak: newStreak,
-              longestStreak: newLongest,
-            },
-          });
-        } else {
-          // Reset streak on loss
-          await db.user.update({
-            where: { id: currentUserId },
-            data: {
-              currentStreak: 0,
-            },
-          });
+      // Handle user streak and longestStreak updates - EXCLUDE duel games
+      if (!isDuelGame) {
+        const user = await db.user.findUnique({ where: { id: currentUserId } });
+        if (user) {
+          if (isWon) {
+            const newStreak = user.currentStreak + 1;
+            const newLongest = Math.max(user.longestStreak, newStreak);
+            await db.user.update({
+              where: { id: currentUserId },
+              data: {
+                tinta: { increment: tintaEarned },
+                currentStreak: newStreak,
+                longestStreak: newLongest,
+              },
+            });
+          } else {
+            // Reset streak on loss
+            await db.user.update({
+              where: { id: currentUserId },
+              data: {
+                currentStreak: 0,
+              },
+            });
+          }
         }
       }
 

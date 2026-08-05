@@ -52,6 +52,7 @@ interface UserData {
   username: string;
   email: string;
   avatarSeed?: string;
+  avatarUrl?: string | null;
   tinta: number;
   tintaSpent: number;
   currentStreak: number;
@@ -95,6 +96,8 @@ export default function UserDashboardPage() {
   // Profile edit states
   const [editUsername, setEditUsername] = useState("");
   const [editAvatarSeed, setEditAvatarSeed] = useState("klu_fan");
+  const [customAvatarUrl, setCustomAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Time Filter States
@@ -118,6 +121,7 @@ export default function UserDashboardPage() {
         setUser(data.user);
         setEditUsername(data.user.username);
         setEditAvatarSeed(data.user.avatarSeed || "klu_fan");
+        setCustomAvatarUrl(data.user.avatarUrl || null);
       }
       if (data.stats) setStats(data.stats);
       if (data.dailyAnalytics) setDailyAnalytics(data.dailyAnalytics);
@@ -145,7 +149,11 @@ export default function UserDashboardPage() {
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: editUsername.trim(), avatarSeed: editAvatarSeed }),
+        body: JSON.stringify({ 
+          username: editUsername.trim(), 
+          avatarSeed: editAvatarSeed,
+          avatarUrl: customAvatarUrl,
+        }),
       });
 
       const data = await res.json();
@@ -163,6 +171,31 @@ export default function UserDashboardPage() {
       alert("Koneksi bermasalah saat menyimpan profil!");
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    setUploadingAvatar(true);
+
+    try {
+      const res = await fetch(`/api/user/upload-avatar?filename=${file.name}`, {
+        method: "POST",
+        body: file,
+      });
+
+      const blob = await res.json();
+      if (blob.url) {
+        setCustomAvatarUrl(blob.url);
+        setToastMsg("📷 Foto profil berhasil diunggah!");
+        setTimeout(() => setToastMsg(null), 3000);
+      }
+    } catch (err) {
+      console.error("Gagal unggah avatar:", err);
+      alert("Gagal mengunggah foto profil kustom!");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -239,9 +272,15 @@ export default function UserDashboardPage() {
         <div className="bg-white comic-border p-4 sm:p-5 rounded-xl comic-shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left w-full sm:w-auto">
             {/* Avatar Badge Terbungkus Border Komik */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-comic-yellow comic-border flex items-center justify-center font-bangers text-3xl sm:text-4xl text-comic-ink comic-shadow shrink-0 rotate-[-3deg] select-none">
-              {currentAvatarEmoji}
-            </div>
+            {user?.avatarUrl ? (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden comic-border comic-shadow shrink-0 rotate-[-3deg] relative">
+                <img src={user.avatarUrl} alt="Custom Profile" className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-comic-yellow comic-border flex items-center justify-center font-bangers text-3xl sm:text-4xl text-comic-ink comic-shadow shrink-0 rotate-[-3deg] select-none">
+                {currentAvatarEmoji}
+              </div>
+            )}
 
             <div className="flex flex-col items-center sm:items-start">
               <div className="flex items-center justify-center sm:justify-start gap-2">
@@ -566,6 +605,35 @@ export default function UserDashboardPage() {
                   onChange={(e) => setEditUsername(e.target.value)}
                   className="bg-white comic-border px-3 py-2 rounded-md font-bangers text-base text-comic-ink"
                 />
+              </div>
+
+              {/* Upload Foto Profil Kustom */}
+              <div className="flex flex-col gap-1.5 border-t border-gray-100 pt-3">
+                <label className="font-bangers text-sm text-comic-ink">UNGGAH FOTO PROFIL KUSTOM (VERCEL BLOB):</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="bg-white comic-border p-1.5 rounded text-xs w-full"
+                  />
+                  {uploadingAvatar && <span className="font-bangers text-xs text-comic-klu animate-pulse">Mengunggah...</span>}
+                </div>
+                {customAvatarUrl && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-8 h-8 rounded-full overflow-hidden comic-border relative shrink-0">
+                      <img src={customAvatarUrl} alt="Custom Preview" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-bold">Foto Profil Terpilih!</span>
+                    <button
+                      type="button"
+                      onClick={() => setCustomAvatarUrl(null)}
+                      className="text-[10px] text-red-500 underline ml-auto"
+                    >
+                      Hapus Foto
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Pilihan Avatar Komik Terbungkus Border Komik */}

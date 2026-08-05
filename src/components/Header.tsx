@@ -20,6 +20,7 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
   const [tinta, setTinta] = useState<number>(50);
   const [streak, setStreak] = useState<number>(0);
   const [mode, setMode] = useState<"NORMAL" | "HARDCORE_VOICE">("NORMAL");
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function syncUserStatus() {
@@ -30,6 +31,7 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
           if (res.ok && data.tinta !== undefined) {
             setTinta(data.tinta);
             setStreak(data.streak);
+            setUserAvatarUrl(data.avatarUrl || null);
             saveLocalGameState({ tinta: data.tinta, streak: data.streak });
             return;
           }
@@ -194,10 +196,16 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
           {isLoggedIn ? (
             <Link
               href="/dashboard"
-              className="flex-1 sm:flex-initial min-h-[40px] px-3 py-1.5 bg-comic-klu comic-border-sm rounded-md hover:bg-blue-600 transition-colors comic-shadow-sm flex items-center justify-center gap-1 font-bangers text-xs sm:text-sm text-white"
+              className="flex-1 sm:flex-initial min-h-[40px] px-3 py-1.5 bg-comic-klu comic-border-sm rounded-md hover:bg-blue-600 transition-colors comic-shadow-sm flex items-center justify-center gap-1.5 font-bangers text-xs sm:text-sm text-white"
               title="Dashboard & Profil Saya"
             >
-              <LayoutDashboard className="w-3.5 h-3.5 text-white" />
+              {userAvatarUrl ? (
+                <div className="w-5 h-5 rounded-full overflow-hidden border border-white shrink-0">
+                  <img src={userAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <LayoutDashboard className="w-3.5 h-3.5 text-white" />
+              )}
               <span>DASHBOARD</span>
             </Link>
           ) : (

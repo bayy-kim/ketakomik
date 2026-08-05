@@ -14,9 +14,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
-      name: "Tekakonik Credentials",
+      name: "Credentials",
       credentials: {
-        username: { label: "Username / Email", type: "text" },
+        username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -34,9 +34,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           if (!user || !user.passwordHash) return null;
 
-          // Cek suspend status saat login manual
+          // Periksa apakah user di-banned
           if (user.isBanned) {
-            throw new Error(`BANNED: Akun Anda dibekukan oleh Admin. Alasan: ${user.banReason || "Pelanggaran aturan"}`);
+            const now = new Date();
+            if (user.bannedUntil && user.bannedUntil.getTime() <= now.getTime()) {
+              // Jika masa suspend sudah lewat, otomatis unban
+              await db.user.update({
+                where: { id: user.id },
+                data: { isBanned: false, banReason: null, bannedUntil: null },
+              });
+            } else {
+              // Kirim string error suspend terformat
+              const untilStr = user.bannedUntil ? user.bannedUntil.toISOString() : "permanen";
+              throw new Error(`SUSPENDED:${untilStr}:${user.banReason || "Pelanggaran aturan"}`);
+            }
           }
 
           const isValid = await bcrypt.compare(password, user.passwordHash);
@@ -50,7 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
         } catch (e) {
           console.error("Auth error:", e);
-          return null;
+          throw e; // Lemparkan error agar ditangkap oleh frontend login
         }
       },
     }),
@@ -59,16 +70,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === "google" && user.email) {
         try {
-          // Periksa apakah user di-banned
           const existingUser = await db.user.findUnique({
             where: { email: user.email },
           });
 
           if (existingUser?.isBanned) {
-            return `/auth/login?error=Banned&reason=${encodeURIComponent(existingUser.banReason || "Akun ditangguhkan oleh admin")}`;
+            const now = new Date();
+            if (existingUser.bannedUntil && existingUser.bannedUntil.getTime() <= now.getTime()) {
+              // Buka suspend otomatis
+              await db.user.update({
+                where: { id: existingUser.id },
+                data: { isBanned: false, banReason: null, bannedUntil: null },
+              });
+            } else {
+              const untilStr = existingUser.bannedUntil ? existingUser.bannedUntil.toISOString() : "permanen";
+              return `/auth/login?error=Banned&until=${untilStr}&reason=${encodeURIComponent(existingUser.banReason || "Akun ditangguhkan oleh admin")}`;
+            }
           }
 
-          // Auto-create or update Google User in Postgres DB
+          // Auto-create or update Google User
           const usernameFromEmail = user.email.split("@")[0] + "_" + Math.floor(Math.random() * 1000);
           const dbUser = await db.user.upsert({
             where: { email: user.email },

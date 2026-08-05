@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, ShieldAlert, Ban, ShieldCheck, Search, ShieldX } from "lucide-react";
+import { User, ShieldAlert, Ban, ShieldCheck, Search, ShieldX, Calendar } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface UserItem {
@@ -11,6 +11,7 @@ interface UserItem {
   role: string;
   isBanned: boolean;
   banReason: string | null;
+  bannedUntil: string | null;
   createdAt: string;
 }
 
@@ -21,6 +22,8 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [actionUserId, setActionUserId] = useState<string | null>(null);
   const [banReason, setBanReason] = useState("");
+  const [isTemporary, setIsTemporary] = useState(false);
+  const [bannedUntil, setBannedUntil] = useState("");
   const [showBanModal, setShowBanModal] = useState(false);
 
   const loadUsers = async () => {
@@ -44,9 +47,11 @@ export default function AdminUsersPage() {
 
   const handleToggleBan = async (userId: string, currentBanned: boolean) => {
     if (!currentBanned) {
-      // Open modal to get ban reason
+      // Open modal to get ban reason & time
       setActionUserId(userId);
       setBanReason("");
+      setIsTemporary(false);
+      setBannedUntil("");
       setShowBanModal(true);
       return;
     }
@@ -71,6 +76,11 @@ export default function AdminUsersPage() {
 
   const submitBanAction = async () => {
     if (!actionUserId) return;
+    if (isTemporary && !bannedUntil) {
+      alert("Pilih tanggal batas waktu suspend!");
+      return;
+    }
+
     try {
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
@@ -79,6 +89,7 @@ export default function AdminUsersPage() {
           userId: actionUserId,
           isBanned: true,
           banReason: banReason.trim() || "Akun dinonaktifkan oleh administrator",
+          bannedUntil: isTemporary ? new Date(bannedUntil).toISOString() : null,
         }),
       });
       if (res.ok) {
@@ -104,10 +115,10 @@ export default function AdminUsersPage() {
     <div className="flex flex-col gap-6 max-w-5xl">
       <div className="bg-white comic-border p-4 rounded-xl comic-shadow">
         <h1 className="font-bangers text-3xl text-comic-ink flex items-center gap-2">
-          <ShieldX className="w-8 h-8 text-red-500" /> KONTROL & MANAJEMEN PENGGUNA
+          <ShieldX className="w-8 h-8 text-red-500" /> KONTROL & PENGGUNA TEKAKOMIK
         </h1>
         <p className="text-xs font-sans text-gray-700">
-          Kelola semua anggota detektif terdaftar. Ban atau suspend pengguna bermasalah dan berikan alasan notifikasi.
+          Ban secara permanen atau suspend dengan jangka waktu tertentu. Akun yang dibanned/suspend disembunyikan dari Leaderboard.
         </p>
       </div>
 
@@ -136,6 +147,7 @@ export default function AdminUsersPage() {
                   <th className="p-2 border border-comic-ink">EMAIL</th>
                   <th className="p-2 border border-comic-ink">USERNAME</th>
                   <th className="p-2 border border-comic-ink">STATUS</th>
+                  <th className="p-2 border border-comic-ink">BATAS WAKTU SUSPEND</th>
                   <th className="p-2 border border-comic-ink">ALASAN BAN</th>
                   <th className="p-2 border border-comic-ink">TERDAFTAR</th>
                   <th className="p-2 border border-comic-ink text-center">AKSI</th>
@@ -144,7 +156,7 @@ export default function AdminUsersPage() {
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-4 text-center text-gray-500 italic">
+                    <td colSpan={7} className="p-4 text-center text-gray-500 italic">
                       Tidak ada pengguna yang cocok.
                     </td>
                   </tr>
@@ -163,6 +175,9 @@ export default function AdminUsersPage() {
                           >
                             {u.isBanned ? "BANNED" : "AKTIF"}
                           </span>
+                        </td>
+                        <td className="p-2 font-bold text-red-600">
+                          {u.bannedUntil ? new Date(u.bannedUntil).toLocaleString("id-ID") : u.isBanned ? "PERMANEN" : "-"}
                         </td>
                         <td className="p-2 text-gray-600 italic truncate max-w-xs">{u.banReason || "-"}</td>
                         <td className="p-2 text-[10px] text-gray-500">{new Date(u.createdAt).toLocaleDateString("id-ID")}</td>
@@ -199,16 +214,46 @@ export default function AdminUsersPage() {
               <h3 className="font-bangers text-xl">BAN / BEKUKAN AKUN PENGGUNA</h3>
             </div>
 
-            <div className="flex flex-col gap-2 font-sans text-xs">
-              <label className="font-bangers text-sm text-comic-ink">ALASAN PEMBEKUAN / SUSPEND:</label>
-              <textarea
-                rows={3}
-                required
-                placeholder="Tulis alasan pembekuan akun di sini (akan ditampilkan ke pengguna)..."
-                value={banReason}
-                onChange={(e) => setBanReason(e.target.value)}
-                className="bg-gray-50 comic-border p-2.5 rounded text-xs text-comic-ink"
-              />
+            <div className="flex flex-col gap-3 font-sans text-xs">
+              <div className="flex flex-col gap-1">
+                <label className="font-bangers text-sm text-comic-ink">ALASAN PEMBEKUAN / SUSPEND:</label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Tulis alasan pembekuan akun di sini (akan ditampilkan ke pengguna)..."
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  className="bg-gray-50 comic-border p-2.5 rounded text-xs text-comic-ink"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="checkbox"
+                  id="tempCheck"
+                  checked={isTemporary}
+                  onChange={(e) => setIsTemporary(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="tempCheck" className="font-bangers text-sm text-comic-ink">
+                  Suspend Sementara (Dengan Batas Waktu)
+                </label>
+              </div>
+
+              {isTemporary && (
+                <div className="flex flex-col gap-1 mt-1 border-t border-gray-100 pt-2">
+                  <label className="font-bangers text-sm text-red-500 flex items-center gap-1">
+                    <Calendar className="w-4 h-4" /> BATAS WAKTU SUSPEND S/D:
+                  </label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={bannedUntil}
+                    onChange={(e) => setBannedUntil(e.target.value)}
+                    className="bg-gray-50 comic-border px-3 py-2 rounded font-sans text-xs"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 justify-end">

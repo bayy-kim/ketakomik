@@ -373,6 +373,15 @@ function PlayGameContainer() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const handleRevealLetter = useCallback((letter: string, index: number) => {
+    // Reveal a letter at a specific index by automatically filling it
+    setCurrentGuess((prev) => {
+      const arr = prev.split("");
+      arr[index] = letter;
+      return arr.join("");
+    });
+  }, []);
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
       {session && <ComicDailyClaimModal isLoggedIn={!!session} />}
@@ -576,6 +585,10 @@ function PlayGameContainer() {
               tintaCount={tintaCount}
               onDeductTinta={handleDeductTinta}
               isHardcoreVoice={mode === "HARDCORE_VOICE"}
+              guesses={guesses}
+              feedbacks={feedbacks}
+              wordLength={wordLength}
+              onRevealLetter={handleRevealLetter}
             />
           </div>
         </div>

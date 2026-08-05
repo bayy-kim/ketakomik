@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { Volume2, Droplet, Eye, HelpCircle } from "lucide-react";
 import { ComicModal } from "./ComicModal";
+import { LetterState } from "./LetterBox";
 
 interface ClueDualPanelProps {
   wordId: string;
   tintaCount: number;
   onDeductTinta?: (amount: number) => void;
   isHardcoreVoice?: boolean;
+  guesses?: string[];
+  feedbacks?: LetterState[][];
+  wordLength?: number;
+  onRevealLetter?: (letter: string, index: number) => void;
 }
 
 export function ClueDualPanel({
@@ -16,6 +21,10 @@ export function ClueDualPanel({
   tintaCount,
   onDeductTinta,
   isHardcoreVoice = false,
+  guesses = [],
+  feedbacks = [],
+  wordLength = 5,
+  onRevealLetter,
 }: ClueDualPanelProps) {
   const [clueKlu, setClueKlu] = useState<string | null>(null);
   const [clueBayangan, setClueBayangan] = useState<string | null>(null);
@@ -24,14 +33,22 @@ export function ClueDualPanel({
 
   // Confirmation Modal states
   const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingClueChar, setPendingClueChar] = useState<"klu" | "bayangan" | "both" | null>(null);
+  const [pendingClueChar, setPendingClueChar] = useState<"klu" | "bayangan" | "both" | "letter" | null>(null);
 
   // Web Speech fallback state
   const [showTextFallbackKlu, setShowTextFallbackKlu] = useState(false);
   const [showTextFallbackBayangan, setShowTextFallbackBayangan] = useState(false);
 
-  const fetchClue = async (char: "klu" | "bayangan" | "both") => {
-    const cost = char === "both" ? 12 : char === "bayangan" ? 5 : 10;
+  const fetchClue = async (char: "klu" | "bayangan" | "both" | "letter") => {
+    const cost =
+      char === "both"
+        ? 12
+        : char === "bayangan"
+        ? 5
+        : char === "letter"
+        ? 15
+        : 10;
+
     if (tintaCount < cost) {
       setErrorMsg(`Tinta tidak cukup! Butuh ${cost} Tinta.`);
       return;
@@ -44,16 +61,33 @@ export function ClueDualPanel({
   const executeFetchClue = async () => {
     if (!pendingClueChar) return;
     const char = pendingClueChar;
-    const cost = char === "both" ? 12 : char === "bayangan" ? 5 : 10;
+    const cost =
+      char === "both"
+        ? 12
+        : char === "bayangan"
+        ? 5
+        : char === "letter"
+        ? 15
+        : 10;
 
     setLoading(true);
     setErrorMsg("");
+
+    // Dapatkan status tebakan terupdate untuk clue huruf
+    const guessState = new Array(wordLength).fill("ABSENT");
+    feedbacks.forEach((row) => {
+      row.forEach((f, idx) => {
+        if (f === "CORRECT") {
+          guessState[idx] = "CORRECT";
+        }
+      });
+    });
 
     try {
       const res = await fetch("/api/game/clue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wordId, character: char }),
+        body: JSON.stringify({ wordId, character: char, guessState }),
       });
 
       const data = await res.json();
@@ -69,6 +103,13 @@ export function ClueDualPanel({
       if (data.clueMisleading) {
         setClueBayangan(data.clueMisleading);
         if (isHardcoreVoice) speakClue(data.clueMisleading, "bayangan");
+      }
+
+      if (char === "letter" && data.letterClue) {
+        if (onRevealLetter) {
+          onRevealLetter(data.letterClue.letter, data.letterClue.index);
+        }
+        alert(`🔍 Kapten Klu membukakan huruf '${data.letterClue.letter}' di posisi ke-${data.letterClue.index + 1}!`);
       }
 
       if (onDeductTinta) {
@@ -110,6 +151,9 @@ export function ClueDualPanel({
     }
     if (pendingClueChar === "bayangan") {
       return "Apakah kamu yakin ingin menukar 5 Tinta Komik untuk membuka Clue Trik Bayangan?";
+    }
+    if (pendingClueChar === "letter") {
+      return "Apakah kamu yakin ingin menukar 15 Tinta Komik untuk meminta Kapten Klu membukakan 1 Huruf Rahasia di posisi yang benar?";
     }
     return "";
   };
@@ -164,6 +208,13 @@ export function ClueDualPanel({
               className="comic-btn text-sm bg-comic-yellow hover:bg-yellow-400 text-comic-ink"
             >
               <Droplet className="w-4 h-4 fill-comic-ink" /> Buka Dua-duanya (12 Tinta)
+            </button>
+            <button
+              onClick={() => fetchClue("letter")}
+              disabled={loading}
+              className="comic-btn text-sm bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              <Droplet className="w-4 h-4 fill-white" /> Buka 1 Huruf (15 Tinta)
             </button>
           </div>
         </div>

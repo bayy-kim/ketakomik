@@ -165,6 +165,22 @@ export default function DuelRoomPage({ params }: { params: Promise<{ roomCode: s
     }
   }
 
+  // Tampilkan Avatar Url jika ada kustomisasi foto profil
+  const renderAvatar = (avatarUrl: string | null, fallbackEmoji: string, label: string) => {
+    if (avatarUrl) {
+      return (
+        <div className="w-14 h-14 rounded-full overflow-hidden comic-border comic-shadow relative shrink-0">
+          <img src={avatarUrl} alt={label} className="w-full h-full object-cover" />
+        </div>
+      );
+    }
+    return (
+      <div className="w-14 h-14 rounded-full bg-blue-100 comic-border flex items-center justify-center font-bangers text-xl comic-shadow text-comic-klu select-none shrink-0">
+        {fallbackEmoji}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
       <Header />
@@ -226,9 +242,7 @@ export default function DuelRoomPage({ params }: { params: Promise<{ roomCode: s
               PANEL 1: PEMBUAT TANTANGAN
             </div>
 
-            <div className="w-14 h-14 rounded-full bg-blue-100 comic-border flex items-center justify-center font-bangers text-xl comic-shadow text-comic-klu select-none">
-              🦸‍♂️
-            </div>
+            {renderAvatar(duel.creatorAvatar.startsWith("http") ? duel.creatorAvatar : null, "🦸‍♂️", duel.creatorName)}
 
             <h3 className="font-bangers text-2xl text-comic-ink">{duel.creatorName}</h3>
 
@@ -279,9 +293,7 @@ export default function DuelRoomPage({ params }: { params: Promise<{ roomCode: s
               PANEL 2: LAWAN TANTANGAN
             </div>
 
-            <div className="w-14 h-14 rounded-full bg-pink-100 comic-border flex items-center justify-center font-bangers text-xl comic-shadow text-comic-bayangan select-none">
-              🦹‍♀️
-            </div>
+            {renderAvatar(duel.opponentAvatar && duel.opponentAvatar.startsWith("http") ? duel.opponentAvatar : null, "🦹‍♀️", duel.opponentName)}
 
             <h3 className="font-bangers text-2xl text-comic-ink">{duel.opponentName}</h3>
 

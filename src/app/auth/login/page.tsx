@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { User, Lock, LogIn, Mail, UserPlus, ShieldAlert, Sparkles, HelpCircle } from "lucide-react";
+import { User, Lock, LogIn, Mail, UserPlus, ShieldAlert, Sparkles, HelpCircle, Timer } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -27,12 +27,47 @@ function AuthContainer() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Detect error from Google OAuth (banned redirect)
+  // Countdown timer for temporary ban
+  const [suspendTimeLeft, setSuspendTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (suspendTimeLeft !== null && suspendTimeLeft > 0) {
+      interval = setInterval(() => {
+        setSuspendTimeLeft((prev) => {
+          if (prev !== null && prev <= 1) {
+            clearInterval(interval!);
+            setErrorMsg("");
+            return null;
+          }
+          return prev !== null ? prev - 1 : null;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [suspendTimeLeft]);
+
+  // Handle errors from URL params (e.g. Google OAuth redirect on ban)
   useEffect(() => {
     const errorParam = searchParams.get("error");
+    const untilParam = searchParams.get("until");
     const reasonParam = searchParams.get("reason");
-    if (errorParam === "Banned") {
-      setErrorMsg(`⛔ AKUN ANDA DIBEKUKAN / BANNED OLEH ADMIN! Alasan: ${reasonParam || "Pelanggaran aturan"}`);
+
+    if (errorParam === "Banned" || errorParam === "OAuthSignin" || errorParam === "Callback") {
+      if (untilParam) {
+        if (untilParam === "permanen") {
+          setErrorMsg(`⛔ AKUN ANDA DIBEKUKAN PERMANEN OLEH ADMIN! Alasan: ${reasonParam || "Pelanggaran aturan"}`);
+        } else {
+          const expireTime = new Date(untilParam).getTime();
+          const diffSeconds = Math.max(0, Math.round((expireTime - Date.now()) / 1000));
+          if (diffSeconds > 0) {
+            setSuspendTimeLeft(diffSeconds);
+            setErrorMsg(`⏳ AKUN ANDA SEDANG DI-SUSPEND SEMENTARA! Alasan: ${reasonParam || "Pelanggaran aturan"}`);
+          }
+        }
+      }
     }
   }, [searchParams]);
 
@@ -41,6 +76,7 @@ function AuthContainer() {
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
+    setSuspendTimeLeft(null);
 
     try {
       const res = await signIn("credentials", {
@@ -49,11 +85,26 @@ function AuthContainer() {
         redirect: false,
       });
 
+      // Handle custom errors thrown from authorize callback
       if (res?.error) {
-        // Parse error message (including Banned info)
-        if (res.error.includes("BANNED")) {
-          const cleanErr = res.error.replace("CredentialsSignin: ", "").replace("Read more at https://errors.authjs.dev#credentialssignin", "");
-          setErrorMsg(cleanErr);
+        if (res.error.includes("SUSPENDED")) {
+          // Format: SUSPENDED:untilTime:reason
+          const parts = res.error.split(":");
+          const until = parts[2] + ":" + parts[3] + ":" + parts[4]; // Rebuild ISO String
+          const reason = parts[5] || "Pelanggaran aturan komunitas";
+
+          if (until === "permanen" || until.includes("permanen")) {
+            setErrorMsg(`⛔ AKUN ANDA DIBEKUKAN PERMANEN OLEH ADMIN! Alasan: ${reason}`);
+          } else {
+            const expireTime = new Date(until).getTime();
+            const diffSeconds = Math.max(0, Math.round((expireTime - Date.now()) / 1000));
+            if (diffSeconds > 0) {
+              setSuspendTimeLeft(diffSeconds);
+              setErrorMsg(`⏳ AKUN ANDA SEDANG DI-SUSPEND SEMENTARA! Alasan: ${reason}`);
+            } else {
+              setErrorMsg("Gagal melakukan login. Silakan coba lagi.");
+            }
+          }
         } else {
           setErrorMsg("Username atau password salah!");
         }
@@ -118,8 +169,20 @@ function AuthContainer() {
     signIn("google", { callbackUrl });
   };
 
+  const formatCountdown = (totalSeconds: number) => {
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    let res = "";
+    if (days > 0) res += `${days} Hari `;
+    res += `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    return res;
+  };
+
   return (
-    <div className="bg-white comic-border p-6 rounded-2xl comic-shadow-lg w-full flex flex-col gap-5">
+    <div className="bg-white comic-border p-6 rounded-xl comic-shadow-lg w-full flex flex-col gap-5">
       {/* Comic Header Banner */}
       <div className="bg-comic-klu comic-border p-3.5 rounded-xl text-white flex items-center gap-3 rotate-[-1deg]">
         <ShieldAlert className="w-8 h-8 text-comic-yellow shrink-0" />
@@ -138,6 +201,7 @@ function AuthContainer() {
             setTab("login");
             setErrorMsg("");
             setSuccessMsg("");
+            setSuspendTimeLeft(null);
           }}
           className={`flex-1 py-2 font-bangers text-base rounded-lg transition-all flex items-center justify-center gap-1.5 ${
             tab === "login"
@@ -153,6 +217,7 @@ function AuthContainer() {
             setTab("register");
             setErrorMsg("");
             setSuccessMsg("");
+            setSuspendTimeLeft(null);
           }}
           className={`flex-1 py-2 font-bangers text-base rounded-lg transition-all flex items-center justify-center gap-1.5 ${
             tab === "register"
@@ -198,8 +263,14 @@ function AuthContainer() {
       </div>
 
       {errorMsg && (
-        <div className="bg-red-100 comic-border-sm p-2.5 rounded text-xs font-bold text-red-600">
-          {errorMsg}
+        <div className="bg-red-100 comic-border-sm p-3 rounded text-xs font-bold text-red-600 flex flex-col gap-1.5 items-center">
+          <span>{errorMsg}</span>
+          {suspendTimeLeft !== null && (
+            <div className="bg-white border border-red-400 text-red-600 px-3 py-1 rounded-md font-bangers text-sm flex items-center gap-1">
+              <Timer className="w-4 h-4 animate-pulse" />
+              <span>SISA WAKTU: {formatCountdown(suspendTimeLeft)}</span>
+            </div>
+          )}
         </div>
       )}
 

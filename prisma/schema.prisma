@@ -12,6 +12,7 @@ model User {
   passwordHash        String?
   username            String            @unique
   avatarSeed          String            @default("klu_fan")
+  avatarUrl           String?
   role                Role              @default(USER)
   tinta               Int               @default(50)
   tintaSpent          Int               @default(0)
@@ -19,6 +20,7 @@ model User {
   longestStreak       Int               @default(0)
   isBanned            Boolean           @default(false)
   banReason           String?
+  bannedUntil         DateTime?
   lastDailyClaimAt    DateTime?
   createdAt           DateTime          @default(now())
   gameSessions        GameSession[]
@@ -93,6 +95,7 @@ model GameSession {
   durationSeconds Int      @default(0)
   completedAt     DateTime @default(now())
   score           Int      @default(0)
+  isDuel          Boolean  @default(false)
   user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   word            Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
 
