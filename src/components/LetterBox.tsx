@@ -41,11 +41,11 @@ export function LetterBox({
   }
 
   // Precise non-slop adaptive sizes across mobile (320px–430px) and desktop (lg/xl)
-  let sizeClasses = "w-10 h-10 sm:w-13 sm:h-13 lg:w-16 lg:h-16 text-2xl sm:text-3xl lg:text-4xl";
+  let sizeClasses = "w-9 h-9 sm:w-13 sm:h-13 lg:w-16 lg:h-16 text-xl sm:text-3xl lg:text-4xl";
   if (wordLength >= 7) {
-    sizeClasses = "w-7.5 h-7.5 sm:w-11 sm:h-11 lg:w-13 lg:h-13 text-lg sm:text-2xl lg:text-3xl";
+    sizeClasses = "w-7 h-7 sm:w-11 sm:h-11 lg:w-13 lg:h-13 text-base sm:text-2xl lg:text-3xl";
   } else if (wordLength === 6) {
-    sizeClasses = "w-9 h-9 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-xl sm:text-2xl lg:text-3xl";
+    sizeClasses = "w-8 h-8 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-lg sm:text-2xl lg:text-3xl";
   }
 
   return (

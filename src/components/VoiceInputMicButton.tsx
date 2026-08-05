@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mic, MicOff, Volume2 } from "lucide-react";
+import { Mic, MicOff, AlertCircle } from "lucide-react";
+import { ComicModal } from "./ComicModal";
 
 interface VoiceInputMicButtonProps {
   wordLength: number;
@@ -11,6 +12,8 @@ interface VoiceInputMicButtonProps {
 export function VoiceInputMicButton({ wordLength, onVoiceResult }: VoiceInputMicButtonProps) {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -21,7 +24,7 @@ export function VoiceInputMicButton({ wordLength, onVoiceResult }: VoiceInputMic
         const rec = new SpeechRecognition();
         rec.continuous = false;
         rec.interimResults = false;
-        rec.lang = "id-ID"; // Set to Indonesian
+        rec.lang = "id-ID";
 
         rec.onstart = () => {
           setIsListening(true);
@@ -34,18 +37,25 @@ export function VoiceInputMicButton({ wordLength, onVoiceResult }: VoiceInputMic
         rec.onerror = (event: any) => {
           console.error("Speech recognition error:", event.error);
           setIsListening(false);
+          if (event.error === "not-allowed") {
+            setErrorMsg("Izin akses mikrofon ditolak oleh browser Anda. Silakan aktifkan izin mikrofon di setelan browser untuk menggunakan fitur tebak suara ini!");
+            setShowErrorModal(true);
+          } else if (event.error === "no-speech") {
+            setErrorMsg("Tidak ada suara yang terdeteksi. Silakan coba lagi dan ucapkan kata tebakan Anda secara jelas!");
+            setShowErrorModal(true);
+          } else {
+            setErrorMsg("Terjadi gangguan koneksi atau perekam suara. Silakan coba kembali.");
+            setShowErrorModal(true);
+          }
         };
 
         rec.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript;
           if (transcript) {
-            // Bersihkan teks, hilangkan spasi, ubah ke uppercase
             const cleanText = transcript
               .replace(/\s+/g, "")
               .trim()
               .toUpperCase();
-            
-            // Kirim hasil suara jika panjang kata sesuai
             onVoiceResult(cleanText);
           }
         };
@@ -57,23 +67,56 @@ export function VoiceInputMicButton({ wordLength, onVoiceResult }: VoiceInputMic
 
   const toggleListen = () => {
     if (!recognition) {
-      alert("🎙️ Web Speech API / Perekam suara tidak didukung di browser ini. Silakan gunakan Google Chrome!");
+      setErrorMsg("🎙️ Web Speech API / Input suara menggunakan Mic tidak didukung di browser ini. Silakan gunakan browser Google Chrome untuk pengalaman terbaik!");
+      setShowErrorModal(true);
       return;
     }
 
     if (isListening) {
       recognition.stop();
     } else {
-      try {
-        recognition.start();
-      } catch (e) {
-        console.error(e);
+      // Check browser permissions beforehand if API is supported
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: "microphone" as PermissionName }).then((result) => {
+          if (result.state === "denied") {
+            setErrorMsg("Izin akses mikrofon ditolak! Silakan buka gembok izin setelan alamat di bar browser Anda untuk mengizinkan perekaman suara.");
+            setShowErrorModal(true);
+          } else {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }).catch(() => {
+          // Fallback if query permissions fails on some browsers
+          try {
+            recognition.start();
+          } catch (e) {
+            console.error(e);
+          }
+        });
+      } else {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error(e);
+        }
       }
     }
   };
 
   return (
     <div className="w-full flex flex-col items-center gap-2">
+      {/* Comic Modal for Error Notifications */}
+      <ComicModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="MASALAH MIKROFON / SUARA"
+        type="warning"
+        message={errorMsg}
+      />
+
       <button
         onClick={toggleListen}
         type="button"

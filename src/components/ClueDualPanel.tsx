@@ -35,7 +35,9 @@ export function ClueDualPanel({
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingClueChar, setPendingClueChar] = useState<"klu" | "bayangan" | "both" | "letter" | null>(null);
 
-  // Web Speech fallback state
+  // Notification modal for revealed letter
+  const [showLetterModal, setShowLetterModal] = useState(false);
+  const [revealedLetterText, setRevealedLetterText] = useState("");
   const [showTextFallbackKlu, setShowTextFallbackKlu] = useState(false);
   const [showTextFallbackBayangan, setShowTextFallbackBayangan] = useState(false);
 
@@ -109,7 +111,8 @@ export function ClueDualPanel({
         if (onRevealLetter) {
           onRevealLetter(data.letterClue.letter, data.letterClue.index);
         }
-        alert(`🔍 Kapten Klu membukakan huruf '${data.letterClue.letter}' di posisi ke-${data.letterClue.index + 1}!`);
+        setRevealedLetterText(`🔍 Kapten Klu berhasil membukakan huruf '${data.letterClue.letter}' pada posisi kotak ke-${data.letterClue.index + 1}!`);
+        setShowLetterModal(true);
       }
 
       if (onDeductTinta) {
@@ -124,6 +127,7 @@ export function ClueDualPanel({
     }
   };
 
+  // Web Speech fallback state
   const speakClue = (text: string, char: "klu" | "bayangan") => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
@@ -160,6 +164,15 @@ export function ClueDualPanel({
 
   return (
     <div className="w-full flex flex-col gap-4 my-2">
+      {/* Letter Clue Reveal modal notification */}
+      <ComicModal
+        isOpen={showLetterModal}
+        onClose={() => setShowLetterModal(false)}
+        title="HURUF BERHASIL DIBUKA!"
+        type="success"
+        message={revealedLetterText}
+      />
+
       {/* Clue confirmation modal */}
       <ComicModal
         isOpen={showConfirm}

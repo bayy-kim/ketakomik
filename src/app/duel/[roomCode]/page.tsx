@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+import { ComicModal } from "@/components/ComicModal";
+
 interface DuelData {
   roomCode: string;
   wordId: string;
@@ -44,6 +46,8 @@ export default function DuelRoomPage({ params }: { params: Promise<{ roomCode: s
   const [loadingJoin, setLoadingJoin] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const [showShareLinkModal, setShowShareLinkModal] = useState(false);
+
   const loadDuelRoom = async () => {
     try {
       const res = await fetch(`/api/duel/${roomCode}`);
@@ -69,7 +73,7 @@ export default function DuelRoomPage({ params }: { params: Promise<{ roomCode: s
   const copyShareLink = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
-    alert("Link Duel berhasil disalin ke clipboard! Kirim ke temanmu!");
+    setShowShareLinkModal(true);
   };
 
   const handleJoinRoom = async () => {
@@ -184,6 +188,14 @@ export default function DuelRoomPage({ params }: { params: Promise<{ roomCode: s
   return (
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
       <Header />
+
+      <ComicModal
+        isOpen={showShareLinkModal}
+        onClose={() => setShowShareLinkModal(false)}
+        title="LINK DUEL DISALIN!"
+        type="success"
+        message="Link arena pertandingan berhasil disalin ke clipboard Anda. Silakan bagikan link tersebut ke teman duel Anda lewat WhatsApp atau media sosial lainnya!"
+      />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-3 py-6 flex flex-col gap-6">
         {/* Banner Arena Duel */}

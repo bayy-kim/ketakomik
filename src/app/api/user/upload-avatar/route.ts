@@ -20,11 +20,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       onBeforeGenerateToken: async () => {
         return {
           allowedContentTypes: ["image/jpeg", "image/png", "image/webp"],
-          maximumSizeInBytes: 2 * 1024 * 1024, // Max 2MB
+          maximumSizeInBytes: 2 * 1024 * 1024, // Strict Max 2MB limit
+          tokenPayload: JSON.stringify({
+            userId: currentUserId,
+          }),
         };
       },
       onUploadCompleted: async ({ blob }) => {
-        // Save the uploaded image url to the user profile
         try {
           await db.user.update({
             where: { id: currentUserId },

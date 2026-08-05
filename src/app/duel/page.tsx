@@ -5,17 +5,20 @@ import { Header } from "@/components/Header";
 import { Swords, Plus, ArrowRight, Clock, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { ComicModal } from "@/components/ComicModal";
 
 export default function DuelLandingPage() {
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
 
   const handleJoinDuel = () => {
     if (!roomCodeInput || roomCodeInput.trim().length < 4) {
-      alert("Masukkan kode room duel yang valid!");
+      setErrorMsg("Masukkan kode room duel yang valid!");
+      setShowErrorModal(true);
       return;
     }
     router.push(`/duel/${roomCodeInput.trim().toUpperCase()}`);
@@ -39,6 +42,7 @@ export default function DuelLandingPage() {
       const data = await res.json();
       if (!res.ok) {
         setErrorMsg(data.error || "Gagal membuat room duel");
+        setShowErrorModal(true);
         return;
       }
 
@@ -48,6 +52,7 @@ export default function DuelLandingPage() {
     } catch (e) {
       console.error("Gagal membuat room duel:", e);
       setErrorMsg("Koneksi bermasalah!");
+      setShowErrorModal(true);
     } finally {
       setLoading(false);
     }
@@ -57,8 +62,17 @@ export default function DuelLandingPage() {
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
       <Header />
 
+      {/* Comic Modal for Error Notifications */}
+      <ComicModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="INFO ARENA DUEL"
+        type="warning"
+        message={errorMsg}
+      />
+
       <main className="flex-1 max-w-xl mx-auto w-full px-3 py-8 flex flex-col items-center justify-center">
-        <div className="bg-white comic-border p-6 rounded-2xl comic-shadow-lg w-full flex flex-col items-center gap-6 text-center">
+        <div className="bg-white comic-border p-6 rounded-xl comic-shadow-lg w-full flex flex-col items-center gap-6 text-center">
           {/* Header Icon */}
           <div className="w-16 h-16 rounded-full bg-comic-bayangan comic-border flex items-center justify-center text-white comic-shadow rotate-[-4deg]">
             <Swords className="w-8 h-8" />
@@ -70,8 +84,6 @@ export default function DuelLandingPage() {
               Tantang temanmu menebak kata yang SAMA dengan batasan waktu 120 Detik! Hasil tebakan akan otomatis tercatat di Papan Peringkat (Leaderboard).
             </p>
           </div>
-
-          {errorMsg && <div className="w-full bg-red-100 comic-border-sm p-3 rounded text-xs font-bold text-red-600">{errorMsg}</div>}
 
           {/* Join Duel Section */}
           <div className="w-full bg-amber-50 comic-border p-4 rounded-xl flex flex-col gap-2">
