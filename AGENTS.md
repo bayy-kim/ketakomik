@@ -1,4 +1,4 @@
-# Tekakonik — Rules & Guardrails for AI Agents
+# Tekakomik — Rules & Guardrails for AI Agents
 
 ## Core Principles & Visual Identity (Modern Comic)
 - **Primary Characters**: 
@@ -21,12 +21,15 @@
 1. **Security & Word Leaks**:
    - `Word.text` MUST NEVER be sent to the client frontend before the game session is solved/completed.
    - All guess evaluation occurs server-side in API routes (`/api/game/guess`). Return ONLY status arrays (`"CORRECT"`, `"PRESENT"`, `"ABSENT"`).
+   - All critical admin operations under `/api/admin/*` must verify session role using `requireAdmin()` helper.
+   - Secure critical endpoints by obtaining the logged-in user session via `auth()` server-side rather than trusting the client-provided request body `userId`.
 2. **Mobile First & Responsive**:
    - Build all screens & components for 375px mobile viewport FIRST.
    - Use Tailwind responsive prefixes (`md:`, `lg:`, `xl:`) within the SAME file/component. NEVER duplicate files for desktop vs mobile.
    - Desktop layout (lg+): Use 2-column layout separated by thick black comic gutter lines.
    - Touch targets: Minimum 44x44px per virtual keyboard button.
    - Use `100dvh` for full screen heights.
+   - Hide public BottomBar when on admin dashboard pages (`/dashboardadmin`).
 3. **App Router & Suspense**:
    - Any component utilizing `useSearchParams()` MUST be wrapped in a `<Suspense>` boundary.
 4. **CSS & Styling Rules**:
@@ -35,10 +38,15 @@
    - For modals/drawers, backdrop filters create new stacking contexts; use React Portals or fixed overlays cleanly.
 5. **Auth & Sessions**:
    - NextAuth v5 configuration MUST include `trustHost: true`.
-   - Support seamless guest gameplay with anonymous session IDs stored in `localStorage`.
+   - All normal gameplay actions require authentication. Redirect users smoothly to `/auth/login` on protected action attempts.
 6. **Animations & Web Speech API**:
    - 3D card flips for guess letters, screen shake on wrong guesses, halftone bursts on win.
    - Web Speech API fallback: Always provide "Tampilkan sebagai Teks" for iOS Safari audio failures in Hardcore Voice Mode.
+7. **Daily Claim & Chapter Progress Limits**:
+   - Limit users to completing a maximum of 1 Chapter (5 words) per day, resetting at 06:00 AM WIB.
+   - Automatically claim +70 Tinta harian for users logging in or entering the play page after 06:00 AM.
+   - Hide banned/suspended users from the public leaderboard.
+   - Exclude duel game sessions from updating user streaks or dashboard statistics.
 
 ## Data Schema Summary
 - Models: `User`, `Chapter`, `Word`, `GameSession`, `DuelChallenge`, `WordSuggestion`, `Announcement`, `FeatureFlag`.
