@@ -17,6 +17,8 @@ interface WordItem {
   scheduledDate: string;
   difficulty: string;
   category: string;
+  solvedNormal?: boolean;
+  solvedHardcore?: boolean;
 }
 
 interface ChapterItem {
@@ -133,14 +135,14 @@ export default function ChapterPage() {
           /* Chapter List */
           <div className="flex flex-col gap-6">
             {chapters.map((chapter, cIdx) => {
-              const completedCount = chapter.words ? chapter.words.filter((w) => completedWordIds.includes(w.id)).length : 0;
+              const completedCount = chapter.words ? chapter.words.filter((w) => w.solvedNormal && w.solvedHardcore).length : 0;
               const totalWordsInChapter = chapter.words ? chapter.words.length : (chapter.totalWords || 5);
               const progressPercent = totalWordsInChapter > 0 ? Math.round((completedCount / totalWordsInChapter) * 100) : 0;
               const isAllCompleted = totalWordsInChapter > 0 && completedCount >= totalWordsInChapter;
 
-              // Sequential Lock: Chapter X unlocked only if Chapter X-1 is 100% completed (Chapter 1 is always unlocked)
+              // Sequential Lock: Chapter X unlocked only if Chapter X-1 is 100% completed in BOTH modes (Chapter 1 is always unlocked)
               const prevChapter = cIdx > 0 ? chapters[cIdx - 1] : null;
-              const prevCompletedCount = prevChapter && prevChapter.words ? prevChapter.words.filter((w) => completedWordIds.includes(w.id)).length : 0;
+              const prevCompletedCount = prevChapter && prevChapter.words ? prevChapter.words.filter((w) => w.solvedNormal && w.solvedHardcore).length : 0;
               const prevTotalWords = prevChapter && prevChapter.words ? prevChapter.words.length : 5;
               const isChapterUnlocked = cIdx === 0 || (prevChapter && prevCompletedCount >= prevTotalWords);
 
@@ -203,19 +205,42 @@ export default function ChapterPage() {
                   {chapter.words && chapter.words.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
                       {chapter.words.map((word, idx) => {
-                        const isSolved = completedWordIds.includes(word.id);
+                        const isSolvedNormal = !!word.solvedNormal;
+                        const isSolvedHardcore = !!word.solvedHardcore;
+                        const isSolvedBoth = isSolvedNormal && isSolvedHardcore;
+
+                        // Tentukan background & border berdasarkan status penyelesaian mode
+                        let boxBg = "bg-gray-50 border-gray-300";
+                        let statusText = "Belum Main";
+                        let statusTextColor = "text-gray-500";
+
+                        if (isSolvedBoth) {
+                          boxBg = "bg-amber-50 border-amber-500";
+                          statusText = "Lengkap 👑";
+                          statusTextColor = "text-amber-700 font-extrabold";
+                        } else if (isSolvedHardcore) {
+                          boxBg = "bg-green-50 border-green-500";
+                          statusText = "Hardcore Selesai";
+                          statusTextColor = "text-emerald-700 font-bold";
+                        } else if (isSolvedNormal) {
+                          boxBg = "bg-blue-50 border-blue-500";
+                          statusText = "Normal Selesai";
+                          statusTextColor = "text-comic-klu font-bold";
+                        } else if (!isChapterUnlocked) {
+                          boxBg = "bg-gray-200 opacity-60 border-gray-300";
+                        }
 
                         return (
                           <div
                             key={word.id}
-                            className={`comic-border p-2.5 rounded-lg flex flex-col items-center justify-center gap-1 ${
-                              isSolved ? "bg-green-100" : isChapterUnlocked ? "bg-gray-50" : "bg-gray-200 opacity-60"
-                            }`}
+                            className={`comic-border p-2.5 rounded-lg flex flex-col items-center justify-center gap-1 ${boxBg}`}
                           >
                             <span className="font-bangers text-sm text-comic-ink">KATA #{idx + 1}</span>
-                            <span className="text-[10px] text-gray-500 font-sans">{word.category}</span>
-                            {isSolved ? (
-                              <CheckCircle className="w-4 h-4 text-emerald-600" />
+                            <span className="text-[9px] text-gray-500 font-sans leading-none">{word.category}</span>
+                            <span className={`text-[8px] font-sans tracking-wide leading-none ${statusTextColor}`}>{statusText}</span>
+                            
+                            {isSolvedBoth ? (
+                              <CheckCircle className="w-4 h-4 text-amber-500 fill-amber-50" />
                             ) : isChapterUnlocked ? (
                               <button
                                 onClick={() => setSelectedWord({
@@ -224,12 +249,12 @@ export default function ChapterPage() {
                                   category: word.category,
                                   difficulty: word.difficulty
                                 })}
-                                className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5 cursor-pointer"
+                                className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5 cursor-pointer mt-1"
                               >
-                                Mainkan <ArrowRight className="w-3 h-3" />
+                                {isSolvedNormal || isSolvedHardcore ? "Lengkapi" : "Mainkan"} <ArrowRight className="w-3 h-3" />
                               </button>
                             ) : (
-                              <Lock className="w-3.5 h-3.5 text-gray-400" />
+                              <Lock className="w-3.5 h-3.5 text-gray-400 mt-1" />
                             )}
                           </div>
                         );

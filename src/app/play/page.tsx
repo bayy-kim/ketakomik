@@ -336,6 +336,11 @@ function PlayGameContainer() {
   // Global Physical Keyboard Event Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Banned keyboard input in hardcore voice mode to enforce mic-only input
+      if (mode === "HARDCORE_VOICE") {
+        return;
+      }
+
       const targetTag = (e.target as HTMLElement)?.tagName?.toUpperCase();
       if (targetTag === "INPUT" || targetTag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) {
         return;
@@ -355,7 +360,7 @@ function PlayGameContainer() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleChar, handleDelete, handleEnter]);
+  }, [handleChar, handleDelete, handleEnter, mode]);
 
   const handleDeductTinta = (amount: number) => {
     const updated = Math.max(0, tintaCount - amount);
