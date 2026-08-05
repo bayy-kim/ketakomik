@@ -14,10 +14,12 @@ import { getLocalGameState, saveLocalGameState } from "@/lib/storage";
 import { CheckCircle2, Lock, ArrowRight, BookOpen, Clock, Swords, Timer } from "lucide-react";
 import Link from "next/link";
 import { ComicDailyClaimModal } from "@/components/ComicDailyClaimModal";
+import { VoiceInputMicButton } from "@/components/VoiceInputMicButton";
 
 function PlayGameContainer() {
   const searchParams = useSearchParams();
   const duelRoomCode = searchParams.get("duel");
+  const queryMode = searchParams.get("mode");
   const { data: session } = useSession();
 
   const [wordId, setWordId] = useState<string>("w1");
@@ -126,10 +128,22 @@ function PlayGameContainer() {
         }
       }
 
+      // Atur mode berdasarkan searchParam (?mode=HARDCORE_VOICE)
+      let activeMode: "NORMAL" | "HARDCORE_VOICE" = "NORMAL";
+      if (queryMode === "HARDCORE_VOICE" || state.mode === "HARDCORE_VOICE") {
+        activeMode = "HARDCORE_VOICE";
+      }
+
       setTintaCount(activeTinta);
       setStreakCount(activeStreak);
-      setMode(state.mode);
+      setMode(activeMode);
       setStartTime(Date.now());
+
+      // Jika hardcore voice mode, aktifkan countdown 120s secara otomatis sejak awal
+      if (activeMode === "HARDCORE_VOICE") {
+        setTimeLeft(120);
+        setTimerActive(true);
+      }
 
       try {
         if (duelRoomCode) {
@@ -454,6 +468,20 @@ function PlayGameContainer() {
           </div>
         )}
 
+        {/* Hardcore Voice Mode Timer Indicator Banner (Only if not in duel mode) */}
+        {!isDuelMode && mode === "HARDCORE_VOICE" && (
+          <div className="w-full bg-comic-bayangan comic-border p-3 rounded-xl comic-shadow mb-4 flex items-center justify-between text-white border-comic-bayangan">
+            <div className="flex items-center gap-2 font-bangers text-lg">
+              <span className="text-xl">🎙️</span>
+              <span>MODE DENGAR & MIC (HARDCORE)</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white text-comic-ink px-3 py-1 rounded-full font-bangers text-base comic-border-sm">
+              <Timer className="w-4 h-4 text-red-500 animate-pulse" />
+              <span>BATAS WAKTU: {formatTimer(timeLeft)}</span>
+            </div>
+          </div>
+        )}
+
         {/* Desktop 2-Column Responsive Layout */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main Game Board Column */}
@@ -535,7 +563,23 @@ function PlayGameContainer() {
 
             {/* On-screen Virtual Keyboard (Inside left column, below game board) */}
             {!isGameOver && (
-              <div className="w-full mt-4 z-30">
+              <div className="w-full mt-4 z-30 flex flex-col gap-3">
+                {mode === "HARDCORE_VOICE" && (
+                  <VoiceInputMicButton 
+                    wordLength={wordLength} 
+                    onVoiceResult={(voiceText) => {
+                      if (voiceText.length === wordLength) {
+                        setCurrentGuess(voiceText);
+                        setFeedbackBurst("TERDENGAR!");
+                        setTimeout(() => setFeedbackBurst(null), 1200);
+                      } else {
+                        setFeedbackBurst("SUARA TIDAK JELAS!");
+                        setTimeout(() => setFeedbackBurst(null), 1200);
+                      }
+                    }} 
+                  />
+                )}
+                
                 <VirtualKeyboard
                   onChar={handleChar}
                   onDelete={handleDelete}

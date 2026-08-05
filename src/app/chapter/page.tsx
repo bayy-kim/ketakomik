@@ -6,9 +6,11 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BookOpen, CheckCircle, Lock, Sparkles, ArrowRight, AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getLocalGameState } from "@/lib/storage";
 import { useSession } from "next-auth/react";
 import { ComicDailyClaimModal } from "@/components/ComicDailyClaimModal";
+import { ChapterModeSelectModal } from "@/components/ChapterModeSelectModal";
 
 interface WordItem {
   id: string;
@@ -28,11 +30,20 @@ interface ChapterItem {
 
 export default function ChapterPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
   const [completedWordIds, setCompletedWordIds] = useState<string[]>([]);
   const [selectedUnlockComic, setSelectedUnlockComic] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Mode Selection Modal state
+  const [selectedWord, setSelectedWord] = useState<{
+    id: string;
+    index: number;
+    category: string;
+    difficulty: string;
+  } | null>(null);
 
   const loadChapters = async () => {
     setLoading(true);
@@ -61,10 +72,29 @@ export default function ChapterPage() {
     loadChapters();
   }, []);
 
+  const handleSelectMode = (mode: "NORMAL" | "HARDCORE_VOICE") => {
+    if (!selectedWord) return;
+    router.push(`/play?wordId=${selectedWord.id}&mode=${mode}`);
+    setSelectedWord(null);
+  };
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-comic-paper">
       {session && <ComicDailyClaimModal isLoggedIn={!!session} />}
       <Header />
+
+      {/* Mode Select Modal */}
+      {selectedWord && (
+        <ChapterModeSelectModal
+          isOpen={!!selectedWord}
+          onClose={() => setSelectedWord(null)}
+          wordId={selectedWord.id}
+          wordIndex={selectedWord.index}
+          category={selectedWord.category}
+          difficulty={selectedWord.difficulty}
+          onSelectMode={handleSelectMode}
+        />
+      )}
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-3 py-6">
         {/* Title Header */}
@@ -187,12 +217,17 @@ export default function ChapterPage() {
                             {isSolved ? (
                               <CheckCircle className="w-4 h-4 text-emerald-600" />
                             ) : isChapterUnlocked ? (
-                              <Link
-                                href={`/play?wordId=${word.id}`}
-                                className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5"
+                              <button
+                                onClick={() => setSelectedWord({
+                                  id: word.id,
+                                  index: idx + 1,
+                                  category: word.category,
+                                  difficulty: word.difficulty
+                                })}
+                                className="text-[10px] font-bangers text-comic-klu underline flex items-center gap-0.5 cursor-pointer"
                               >
                                 Mainkan <ArrowRight className="w-3 h-3" />
-                              </Link>
+                              </button>
                             ) : (
                               <Lock className="w-3.5 h-3.5 text-gray-400" />
                             )}
