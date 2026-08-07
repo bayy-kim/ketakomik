@@ -135,10 +135,14 @@ export default function ChapterPage() {
           /* Chapter List */
           <div className="flex flex-col gap-6">
             {chapters.map((chapter, cIdx) => {
-              const completedCount = chapter.words ? chapter.words.filter((w) => w.solvedNormal && w.solvedHardcore).length : 0;
+              const normalCompletedCount = chapter.words ? chapter.words.filter((w) => w.solvedNormal).length : 0;
+              const hardcoreCompletedCount = chapter.words ? chapter.words.filter((w) => w.solvedHardcore).length : 0;
+              const bothCompletedCount = chapter.words ? chapter.words.filter((w) => w.solvedNormal && w.solvedHardcore).length : 0;
               const totalWordsInChapter = chapter.words ? chapter.words.length : (chapter.totalWords || 5);
-              const progressPercent = totalWordsInChapter > 0 ? Math.round((completedCount / totalWordsInChapter) * 100) : 0;
-              const isAllCompleted = totalWordsInChapter > 0 && completedCount >= totalWordsInChapter;
+              
+              const normalProgressPercent = totalWordsInChapter > 0 ? Math.round((normalCompletedCount / totalWordsInChapter) * 100) : 0;
+              const hardcoreProgressPercent = totalWordsInChapter > 0 ? Math.round((hardcoreCompletedCount / totalWordsInChapter) * 100) : 0;
+              const isAllCompleted = totalWordsInChapter > 0 && bothCompletedCount >= totalWordsInChapter;
 
               // Sequential Lock: Chapter X unlocked if Chapter X-1 is 100% completed in AT LEAST ONE mode (Chapter 1 is always unlocked)
               const prevChapter = cIdx > 0 ? chapters[cIdx - 1] : null;
@@ -189,19 +193,44 @@ export default function ChapterPage() {
                     )}
                   </div>
 
-                  {/* Progress Bar Bergaya Komik */}
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex justify-between text-xs font-bangers text-comic-ink">
-                      <span>PROGRESS PENCARIAN KATA</span>
-                      <span>
-                        {completedCount} / {totalWordsInChapter} KATA ({progressPercent}%)
-                      </span>
+                  {/* Dual Progress Bar: Mode Normal (Biru Electric) & Mode Hardcore Voice (Magenta/Pink Bayangan) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-comic-paper comic-border-sm p-3 rounded-lg">
+                    {/* Mode Normal Progress Bar */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between items-center text-xs font-bangers text-comic-klu">
+                        <span className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-comic-klu border border-comic-ink inline-block" />
+                          MODE NORMAL
+                        </span>
+                        <span>
+                          {normalCompletedCount}/{totalWordsInChapter} ({normalProgressPercent}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-3.5 bg-gray-200 comic-border-sm rounded-full overflow-hidden p-0.5">
+                        <div
+                          className="h-full bg-comic-klu rounded-full transition-all duration-500"
+                          style={{ width: `${normalProgressPercent}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full h-5 bg-gray-200 comic-border-sm rounded-full overflow-hidden p-0.5">
-                      <div
-                        className="h-full bg-comic-yellow comic-border-sm rounded-full transition-all duration-500"
-                        style={{ width: `${progressPercent}%` }}
-                      />
+
+                    {/* Mode Hardcore Voice Progress Bar */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between items-center text-xs font-bangers text-comic-bayangan">
+                        <span className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-comic-bayangan border border-comic-ink inline-block" />
+                          MODE HARDCORE VOICE 🎙️
+                        </span>
+                        <span>
+                          {hardcoreCompletedCount}/{totalWordsInChapter} ({hardcoreProgressPercent}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-3.5 bg-gray-200 comic-border-sm rounded-full overflow-hidden p-0.5">
+                        <div
+                          className="h-full bg-comic-bayangan rounded-full transition-all duration-500"
+                          style={{ width: `${hardcoreProgressPercent}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
 
