@@ -168,8 +168,12 @@ function PlayGameContainer() {
         if (queryWordId) {
           const res = await fetch(`/api/game/next-word?wordId=${queryWordId}`);
           const data = await res.json();
-          // Panggil API next-word untuk verifikasi info kata
           setWordId(queryWordId);
+          if (data.currentWordInfo) {
+            setWordLength(data.currentWordInfo.length || 5);
+            setCategory(data.currentWordInfo.category || "Chapter");
+            setDifficulty(data.currentWordInfo.difficulty || "MEDIUM");
+          }
           if (state.completedWordIds && state.completedWordIds.includes(queryWordId)) {
             const saved = state.guessesHistory[queryWordId];
             if (saved) {

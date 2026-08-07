@@ -9,8 +9,12 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           {/* Brand Info */}
           <div className="md:col-span-6 flex flex-col gap-3">
-            <Link href="/" className="flex items-center gap-2 w-fit">
-              <div className="bg-comic-yellow comic-border px-3 py-1 rounded rotate-[-2deg] comic-shadow-sm">
+            <Link href="/" className="flex items-center gap-2 w-fit group">
+              <div className="bg-comic-yellow comic-border px-3 py-1 rounded rotate-[-2deg] group-hover:rotate-0 transition-transform comic-shadow-sm flex items-center gap-1.5">
+                <div className="flex items-baseline font-bangers text-3xl tracking-tight leading-none">
+                  <span className="text-comic-klu inline-block group-hover:scale-110 transition-transform">T</span>
+                  <span className="text-comic-bayangan inline-block transform translate-y-1.5 rotate-[18deg] group-hover:rotate-[30deg] group-hover:translate-y-2.5 transition-all duration-300 drop-shadow-[2px_2px_0_#16161A]">K</span>
+                </div>
                 <span className="font-bangers text-3xl text-comic-ink tracking-wider">TEKAKOMIK</span>
               </div>
             </Link>

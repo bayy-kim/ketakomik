@@ -68,10 +68,14 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
       <div className="max-w-6xl mx-auto px-2.5 sm:px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2.5">
         {/* Top Tier on Mobile / Left Section on Desktop: Logo + Status Badges */}
         <div className="w-full sm:w-auto flex items-center justify-between gap-2.5">
-          {/* Logo Brand */}
+          {/* Logo Brand Modern Comic: TK dengan huruf K jatuh bergaya gravitasi */}
           <Link href="/" className="flex items-center gap-1.5 shrink-0 group">
-            <div className="bg-comic-yellow comic-border px-2.5 py-1 rounded-md rotate-[-2deg] group-hover:rotate-0 transition-transform comic-shadow-sm">
-              <span className="font-bangers text-2xl sm:text-3xl text-comic-ink tracking-wider">TEKAKOMIK</span>
+            <div className="bg-comic-yellow comic-border px-2.5 py-1 rounded-md rotate-[-2deg] group-hover:rotate-0 transition-transform comic-shadow-sm flex items-center gap-1">
+              <div className="flex items-baseline font-bangers text-2xl sm:text-3xl tracking-tight leading-none">
+                <span className="text-comic-klu inline-block transform group-hover:scale-110 transition-transform">T</span>
+                <span className="text-comic-bayangan inline-block transform translate-y-1.5 rotate-[16deg] group-hover:rotate-[28deg] group-hover:translate-y-2.5 transition-all duration-300 drop-shadow-[2px_2px_0_#16161A]">K</span>
+              </div>
+              <span className="font-bangers text-xl sm:text-2xl text-comic-ink tracking-wider ml-0.5 hidden xs:inline sm:inline">TEKAKOMIK</span>
             </div>
           </Link>
 

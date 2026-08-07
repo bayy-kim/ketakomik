@@ -188,19 +188,19 @@ export function ClueDualPanel({
         cancelText="BATAL"
       />
 
-      {/* Help Action Trigger */}
-      {!clueKlu && !clueBayangan && (
-        <div className="bg-amber-50 comic-border p-3.5 rounded-lg comic-shadow text-center flex flex-col items-center gap-2">
-          <div className="flex items-center gap-1.5 font-bangers text-xl text-comic-ink">
-            <HelpCircle className="w-5 h-5 text-comic-klu animate-bounce" /> BUTUH BANTUAN DETEKTIF?
-          </div>
-          <p className="text-xs sm:text-sm text-gray-700">
-            Kapten Klu memberi petunjuk JUJUR, Bayangan memberi trik MENYESATKAN!
-          </p>
+      {/* Help Action Trigger - Always available so players can unlock additional clues anytime */}
+      <div className="bg-amber-50 comic-border p-3.5 rounded-lg comic-shadow text-center flex flex-col items-center gap-2">
+        <div className="flex items-center gap-1.5 font-bangers text-xl text-comic-ink">
+          <HelpCircle className="w-5 h-5 text-comic-klu animate-bounce" /> BUTUH BANTUAN DETEKTIF?
+        </div>
+        <p className="text-xs sm:text-sm text-gray-700">
+          Kapten Klu memberi petunjuk JUJUR, Bayangan memberi trik MENYESATKAN! Kamu bisa memakai lebih dari 1 bantuan!
+        </p>
 
-          {errorMsg && <p className="text-xs font-bold text-red-600 bg-red-100 p-1 rounded border border-red-400">{errorMsg}</p>}
+        {errorMsg && <p className="text-xs font-bold text-red-600 bg-red-100 p-1 rounded border border-red-400">{errorMsg}</p>}
 
-          <div className="flex flex-wrap justify-center gap-2 mt-1">
+        <div className="flex flex-wrap justify-center gap-2 mt-1">
+          {!clueKlu && (
             <button
               onClick={() => fetchClue("klu")}
               disabled={loading}
@@ -208,6 +208,8 @@ export function ClueDualPanel({
             >
               <Droplet className="w-4 h-4 fill-white" /> Kapten Klu (10 Tinta)
             </button>
+          )}
+          {!clueBayangan && (
             <button
               onClick={() => fetchClue("bayangan")}
               disabled={loading}
@@ -215,6 +217,8 @@ export function ClueDualPanel({
             >
               <Droplet className="w-4 h-4 fill-white" /> Bayangan (5 Tinta)
             </button>
+          )}
+          {!clueKlu && !clueBayangan && (
             <button
               onClick={() => fetchClue("both")}
               disabled={loading}
@@ -222,16 +226,16 @@ export function ClueDualPanel({
             >
               <Droplet className="w-4 h-4 fill-comic-ink" /> Buka Dua-duanya (12 Tinta)
             </button>
-            <button
-              onClick={() => fetchClue("letter")}
-              disabled={loading}
-              className="comic-btn text-sm bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              <Droplet className="w-4 h-4 fill-white" /> Buka 1 Huruf (15 Tinta)
-            </button>
-          </div>
+          )}
+          <button
+            onClick={() => fetchClue("letter")}
+            disabled={loading}
+            className="comic-btn text-sm bg-emerald-500 hover:bg-emerald-600 text-white"
+          >
+            <Droplet className="w-4 h-4 fill-white" /> Buka 1 Huruf (15 Tinta)
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Comic Speech Bubbles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

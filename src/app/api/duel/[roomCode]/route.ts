@@ -8,7 +8,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ room
     const duel = await db.duelChallenge.findUnique({
       where: { roomCode: roomCode.toUpperCase() },
       include: {
-        word: true,
+        word: {
+          select: {
+            id: true,
+            normalizedText: true,
+            category: true,
+            difficulty: true,
+          },
+        },
       },
     });
 

@@ -34,6 +34,12 @@ export async function GET(request: Request) {
     if (currentIndex !== -1 && currentIndex + 1 < chapterWords.length) {
       const nextWord = chapterWords[currentIndex + 1];
       return NextResponse.json({
+        currentWordInfo: {
+          id: currentWord.id,
+          length: currentWord.normalizedText.length,
+          category: currentWord.category,
+          difficulty: currentWord.difficulty,
+        },
         nextWordId: nextWord.id,
         nextWordIndex: currentIndex + 2,
         totalWords: chapterWords.length,
@@ -42,6 +48,12 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
+      currentWordInfo: {
+        id: currentWord.id,
+        length: currentWord.normalizedText.length,
+        category: currentWord.category,
+        difficulty: currentWord.difficulty,
+      },
       nextWordId: null,
       isLastInChapter: true,
       chapterTitle: currentWord.chapter.title,
