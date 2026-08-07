@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SessionProviderWrapper } from "@/components/SessionProviderWrapper";
 import { BottomBar } from "@/components/BottomBar";
+import { SwRegister } from "./sw-register";
 import "./globals.css";
 
 const bangers = Bangers({
@@ -70,6 +71,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-comic-paper text-comic-ink selection:bg-comic-klu selection:text-white pb-20 sm:pb-0">
         <SessionProviderWrapper>
+          <SwRegister />
           {children}
           <BottomBar />
         </SessionProviderWrapper>

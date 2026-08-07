@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Play, UserPlus, Lock } from "lucide-react";
+import { Play, UserPlus, Lock, WifiOff } from "lucide-react";
 
 export function LandingHeroCta() {
   const { status } = useSession();
@@ -23,13 +23,14 @@ export function LandingHeroCta() {
             href="/chapter"
             className="comic-btn text-xs bg-white hover:bg-gray-100 text-comic-ink flex-1 py-2 flex items-center justify-center gap-1"
           >
-            <span>📚 CHAPTER STORY</span>
+            <span>📚 CHAPTERS</span>
           </Link>
           <Link
-            href="/duel"
-            className="comic-btn text-xs bg-pink-100 hover:bg-pink-200 text-comic-bayangan flex-1 py-2 flex items-center justify-center gap-1"
+            href="/play-offline"
+            className="comic-btn text-xs bg-gray-100 hover:bg-gray-200 text-comic-ink flex-1 py-2 flex items-center justify-center gap-1 border-dashed"
           >
-            <span>⚔️ DUEL ROOM</span>
+            <WifiOff className="w-3.5 h-3.5 text-comic-bayangan" />
+            <span>MODE OFFLINE</span>
           </Link>
         </div>
       </div>
@@ -37,8 +38,8 @@ export function LandingHeroCta() {
   }
 
   return (
-    <>
-      <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-sm mt-1">
+    <div className="flex flex-col items-center gap-3 w-full max-w-sm mt-1">
+      <div className="flex flex-col sm:flex-row gap-2.5 w-full">
         <Link
           href="/auth/login"
           className="comic-btn text-sm sm:text-base bg-comic-yellow hover:bg-yellow-400 text-comic-ink flex-1 py-3"
@@ -60,9 +61,17 @@ export function LandingHeroCta() {
         </Link>
       </div>
 
+      <Link
+        href="/play-offline"
+        className="comic-btn text-xs bg-amber-100 hover:bg-amber-200 text-comic-ink w-full py-2 flex items-center justify-center gap-1.5 border-dashed"
+      >
+        <WifiOff className="w-4 h-4 text-comic-bayangan" />
+        <span>📴 MAIN MODE OFFLINE (TANPA INTERNET)</span>
+      </Link>
+
       <div className="bg-amber-100/90 comic-border-sm px-3 py-1 rounded-md text-[11px] font-sans text-gray-800 flex items-center justify-center gap-1 font-bold">
-        <Lock className="w-3.5 h-3.5 text-red-600 inline" /> Wajib Sign In terlebih dahulu untuk mengakses arena tebak kata & menyimpan progress.
+        <Lock className="w-3.5 h-3.5 text-red-600 inline" /> Wajib Sign In terlebih dahulu untuk mengakses arena tebak kata online & menyimpan progress.
       </div>
-    </>
+    </div>
   );
 }

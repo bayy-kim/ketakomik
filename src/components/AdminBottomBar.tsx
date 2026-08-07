@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Layers, BarChart3, MessageSquarePlus, Megaphone, Flag, Play, ShieldAlert } from "lucide-react";
+import { Home, BookOpen, Layers, BarChart3, MessageSquarePlus, ShieldAlert, Play, WifiOff } from "lucide-react";
 
 export function AdminBottomBar() {
   const pathname = usePathname();
@@ -30,18 +30,18 @@ export function AdminBottomBar() {
       iconColor: "text-comic-bayangan",
     },
     {
+      label: "OFFLINE",
+      href: "/play-offline",
+      icon: WifiOff,
+      color: "bg-amber-100",
+      iconColor: "text-amber-700",
+    },
+    {
       label: "ANALYTICS",
       href: "/dashboardadmin/analytics",
       icon: BarChart3,
       color: "bg-green-100",
       iconColor: "text-emerald-700",
-    },
-    {
-      label: "USULAN",
-      href: "/dashboardadmin/suggestions",
-      icon: MessageSquarePlus,
-      color: "bg-amber-100",
-      iconColor: "text-amber-700",
     },
     {
       label: "USERS",
