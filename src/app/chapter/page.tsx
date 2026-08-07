@@ -140,9 +140,9 @@ export default function ChapterPage() {
               const progressPercent = totalWordsInChapter > 0 ? Math.round((completedCount / totalWordsInChapter) * 100) : 0;
               const isAllCompleted = totalWordsInChapter > 0 && completedCount >= totalWordsInChapter;
 
-              // Sequential Lock: Chapter X unlocked only if Chapter X-1 is 100% completed in BOTH modes (Chapter 1 is always unlocked)
+              // Sequential Lock: Chapter X unlocked if Chapter X-1 is 100% completed in AT LEAST ONE mode (Chapter 1 is always unlocked)
               const prevChapter = cIdx > 0 ? chapters[cIdx - 1] : null;
-              const prevCompletedCount = prevChapter && prevChapter.words ? prevChapter.words.filter((w) => w.solvedNormal && w.solvedHardcore).length : 0;
+              const prevCompletedCount = prevChapter && prevChapter.words ? prevChapter.words.filter((w) => w.solvedNormal || w.solvedHardcore).length : 0;
               const prevTotalWords = prevChapter && prevChapter.words ? prevChapter.words.length : 5;
               const isChapterUnlocked = cIdx === 0 || (prevChapter && prevCompletedCount >= prevTotalWords);
 
@@ -178,6 +178,10 @@ export default function ChapterPage() {
                       >
                         <Sparkles className="w-4 h-4" /> Buka Komik
                       </button>
+                    ) : isChapterUnlocked ? (
+                      <div className="flex items-center gap-1 bg-amber-100 border border-amber-400 px-2.5 py-1 rounded text-xs font-bangers text-amber-800">
+                        <BookOpen className="w-3.5 h-3.5" /> Berlangsung
+                      </div>
                     ) : (
                       <div className="flex items-center gap-1 bg-gray-100 comic-border-sm px-2.5 py-1 rounded text-xs font-bangers text-gray-600">
                         <Lock className="w-3.5 h-3.5" /> Terkunci

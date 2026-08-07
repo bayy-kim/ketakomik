@@ -285,6 +285,7 @@ function PlayGameContainer() {
 
       if (data.isWon) {
         setFeedbackBurst("TEPAT!");
+        setTimeout(() => setFeedbackBurst(null), 5000);
         setIsWon(true);
         setIsGameOver(true);
         setTimerActive(false);
@@ -327,6 +328,7 @@ function PlayGameContainer() {
         });
       } else if (data.isGameOver) {
         setFeedbackBurst("MELESET!");
+        setTimeout(() => setFeedbackBurst(null), 5000);
         setIsGameOver(true);
         setTimerActive(false);
         if (!isDuelMode) setIsAlreadyCompletedToday(true);
