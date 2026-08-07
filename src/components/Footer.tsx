@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Swords, Trophy, Sparkles, Heart, Play, LogIn } from "lucide-react";
+import { BookOpen, Swords, Trophy, Sparkles, Heart, Play, LogIn, ShieldCheck } from "lucide-react";
 
 export function Footer() {
   return (
@@ -15,7 +15,7 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-xs sm:text-sm font-sans text-gray-700 leading-relaxed max-w-md">
-              Tekakonik adalah game tebak kata harian bergenre <strong>Modern Comic</strong>. Dampingi Kapten Klu memecahkan teka-teki kata jujur dan selidiki trik lucu yang dipasang oleh Bayangan!
+              Tekakomik adalah game tebak kata harian bergenre <strong>Modern Comic</strong>. Dampingi Kapten Klu memecahkan teka-teki kata jujur dan selidiki trik lucu yang dipasang oleh Bayangan!
             </p>
           </div>
 
@@ -62,11 +62,11 @@ export function Footer() {
             </Link>
 
             <Link
-              href="/auth/login"
+              href="/privacy"
               className="bg-comic-paper comic-border p-2.5 rounded-lg flex items-center gap-2 hover:bg-purple-100 transition-colors comic-shadow-sm"
             >
-              <LogIn className="w-5 h-5 text-purple-700" />
-              <span className="font-bangers text-sm text-purple-700">Login / Daftar</span>
+              <ShieldCheck className="w-5 h-5 text-purple-700" />
+              <span className="font-bangers text-sm text-purple-700">Privasi</span>
             </Link>
           </div>
         </div>
