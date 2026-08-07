@@ -137,7 +137,7 @@ export function Header({ mode: initialMode, onModeToggle, tintaCount: propTinta,
             title={!isLoggedIn ? "Wajib Login Terlebih Dahulu" : "Arena Game"}
           >
             <Play className="w-3.5 h-3.5 fill-comic-ink" />
-            <span>MAIN</span>
+            <span>{isLoggedIn ? "PLAY!" : "MAIN"}</span>
             {!isLoggedIn && <Lock className="w-3 h-3 text-red-600 ml-0.5" />}
           </Link>
 

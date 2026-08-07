@@ -590,23 +590,37 @@ function PlayGameContainer() {
                 />
                 
                 {isWon && nextWordInfo && (
-                  <Link
-                    href={`/play?wordId=${nextWordInfo.nextWordId}`}
-                    onClick={() => {
-                      // Reset game states to play the next word in the same chapter
-                      setGuesses([]);
-                      setFeedbacks([]);
-                      setCurrentGuess("");
-                      setIsWon(false);
-                      setIsGameOver(false);
-                      setWordId(nextWordInfo.nextWordId);
-                      setNextWordInfo(null);
-                      setStartTime(Date.now());
+                  <button
+                    onClick={async () => {
+                      const targetNextId = nextWordInfo.nextWordId;
+                      try {
+                        const res = await fetch(`/api/game/next-word?wordId=${targetNextId}`);
+                        const data = await res.json();
+                        setGuesses([]);
+                        setFeedbacks([]);
+                        setCurrentGuess("");
+                        setIsWon(false);
+                        setIsGameOver(false);
+                        setIsAlreadyCompletedToday(false);
+                        setWordId(targetNextId);
+                        if (data.currentWordInfo) {
+                          setWordLength(data.currentWordInfo.length || 5);
+                          setCategory(data.currentWordInfo.category || "Chapter");
+                          setDifficulty(data.currentWordInfo.difficulty || "MEDIUM");
+                        }
+                        setNextWordInfo(null);
+                        setStartTime(Date.now());
+                        if (typeof window !== "undefined") {
+                          window.history.pushState({}, "", `/play?wordId=${targetNextId}`);
+                        }
+                      } catch (e) {
+                        console.error("Gagal transisi ke kata selanjutnya:", e);
+                      }
                     }}
-                    className="comic-btn text-base bg-comic-yellow text-comic-ink hover:bg-yellow-400 w-full py-3 text-center flex items-center justify-center gap-2 animate-bounce"
+                    className="comic-btn text-base bg-comic-yellow text-comic-ink hover:bg-yellow-400 w-full py-3 text-center flex items-center justify-center gap-2 animate-bounce cursor-pointer"
                   >
                     LANJUT KE KATA BERIKUTNYA (#{nextWordInfo.nextWordIndex} / {nextWordInfo.totalWords}) <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  </button>
                 )}
 
                 {isDuelMode && (

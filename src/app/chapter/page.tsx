@@ -54,7 +54,20 @@ export default function ChapterPage() {
       const res = await fetch("/api/chapters");
       const data = await res.json();
       if (res.ok && data.chapters) {
-        setChapters(data.chapters);
+        const state = getLocalGameState();
+        const mergedChapters = data.chapters.map((ch: ChapterItem) => ({
+          ...ch,
+          words: ch.words ? ch.words.map((w: WordItem) => {
+            const localRecord = state.guessesHistory?.[w.id];
+            const isLocalSolved = !!(localRecord?.won || state.completedWordIds?.includes(w.id));
+            return {
+              ...w,
+              solvedNormal: !!w.solvedNormal || isLocalSolved,
+              solvedHardcore: !!w.solvedHardcore,
+            };
+          }) : [],
+        }));
+        setChapters(mergedChapters);
       } else {
         setErrorMsg(data.error || "Gagal memuat chapter cerita");
       }
