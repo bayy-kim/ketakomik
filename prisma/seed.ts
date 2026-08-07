@@ -1005,7 +1005,8 @@ async function main() {
     });
 
     for (const w of chData.words) {
-      const scheduledWordDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - 105 + wordIndex);
+      // Direct scheduled date mapping: Ensure Chapter 1 Word 1 matches TODAY's date, and subsequent words continue consecutively
+      const scheduledWordDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + wordIndex);
 
       await prisma.word.create({
         data: {

@@ -20,12 +20,14 @@ function PlayGameContainer() {
   const searchParams = useSearchParams();
   const duelRoomCode = searchParams.get("duel");
   const queryMode = searchParams.get("mode");
+  const queryWordId = searchParams.get("wordId");
   const { data: session } = useSession();
 
-  const [wordId, setWordId] = useState<string>("w1");
+  const [wordId, setWordId] = useState<string>("");
   const [wordLength, setWordLength] = useState<number>(5);
   const [category, setCategory] = useState<string>("Misteri");
   const [difficulty, setDifficulty] = useState<string>("MEDIUM");
+  const [noWordAvailable, setNoWordAvailable] = useState<boolean>(false);
   
   const [guesses, setGuesses] = useState<string[]>([]);
   const [feedbacks, setFeedbacks] = useState<LetterState[][]>([]);
@@ -162,10 +164,30 @@ function PlayGameContainer() {
           }
         }
 
-        // Mode Normal Harian
+        // Jika ada queryParam wordId dari halaman Chapter
+        if (queryWordId) {
+          const res = await fetch(`/api/game/next-word?wordId=${queryWordId}`);
+          const data = await res.json();
+          // Panggil API next-word untuk verifikasi info kata
+          setWordId(queryWordId);
+          if (state.completedWordIds && state.completedWordIds.includes(queryWordId)) {
+            const saved = state.guessesHistory[queryWordId];
+            if (saved) {
+              setGuesses(saved.guesses || []);
+              setFeedbacks(saved.feedbacks || []);
+              setIsWon(saved.won);
+              setIsGameOver(true);
+              setIsAlreadyCompletedToday(true);
+              setComicScore(saved.score || 80);
+            }
+          }
+          return;
+        }
+
+        // Mode Normal Harian (Jika tidak ada queryWordId & duelRoomCode)
         const res = await fetch("/api/game/today");
         const data = await res.json();
-        if (data.id) {
+        if (res.ok && data.id) {
           setWordId(data.id);
           setWordLength(data.length || 5);
           setCategory(data.category || "Umum");
@@ -183,14 +205,17 @@ function PlayGameContainer() {
               setComicScore(saved.score || 80);
             }
           }
+        } else {
+          setNoWordAvailable(true);
         }
       } catch (e) {
         console.error("Gagal memuat kata:", e);
+        setNoWordAvailable(true);
       }
     }
 
     syncAndInit();
-  }, [duelRoomCode, session]);
+  }, [duelRoomCode, queryWordId, session]);
 
   const handleChar = useCallback((char: string) => {
     if (isGameOver || loading || isAlreadyCompletedToday) return;
@@ -414,6 +439,29 @@ function PlayGameContainer() {
       <AnnouncementBanner />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-4 flex flex-col items-center justify-between pb-24 sm:pb-4">
+        {/* No Word Available Fallback Banner */}
+        {noWordAvailable && (
+          <div className="w-full bg-yellow-100 comic-border p-4 rounded-xl comic-shadow mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="flex items-center gap-2.5">
+              <span className="text-3xl">🕵️‍♂️</span>
+              <div>
+                <h3 className="font-bangers text-xl text-comic-ink leading-none">
+                  TIDAK ADA KATA HARIAN UNTUK HARI INI!
+                </h3>
+                <p className="text-xs font-sans text-gray-700 mt-1">
+                  Misteri harian belum dijadwalkan. Kamu bisa langsung memilih tantangan dari Chapter Story!
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/chapter"
+              className="comic-btn text-xs sm:text-sm bg-comic-yellow text-comic-ink shrink-0 flex items-center gap-1.5"
+            >
+              <BookOpen className="w-4 h-4" /> PILIH CHAPTER STORY <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+
         {/* Chapter Limit Reached Warning */}
         {isChapterLimitReached && (
           <div className="w-full bg-red-100 comic-border p-4 rounded-xl comic-shadow mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
