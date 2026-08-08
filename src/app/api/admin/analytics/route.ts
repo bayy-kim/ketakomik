@@ -7,12 +7,18 @@ export async function GET() {
   if (!guard.authorized) return guard.response;
 
   try {
-    const gameSessions = await db.gameSession.findMany({
-      include: {
-        word: { select: { id: true, text: true, scheduledDate: true } },
-      },
-      orderBy: { completedAt: "desc" },
-    });
+    const [gameSessions, totalUsers, totalWords, totalChapters, pendingSuggestions] = await Promise.all([
+      db.gameSession.findMany({
+        include: {
+          word: { select: { id: true, text: true, scheduledDate: true } },
+        },
+        orderBy: { completedAt: "desc" },
+      }),
+      db.user.count(),
+      db.word.count(),
+      db.chapter.count(),
+      db.wordSuggestion.count({ where: { status: "PENDING" } }),
+    ]);
 
     const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const now = new Date();
@@ -147,12 +153,24 @@ export async function GET() {
       count,
     }));
 
+    const totalWon = gameSessions.filter((s) => s.won).length;
+    const overallWinRate = gameSessions.length > 0 ? Math.round((totalWon / gameSessions.length) * 100) : 0;
+    const totalAttemptsWon = gameSessions.filter((s) => s.won).reduce((sum, s) => sum + s.attemptsUsed, 0);
+    const avgAttempts = totalWon > 0 ? (totalAttemptsWon / totalWon).toFixed(1) : "0";
+
     return NextResponse.json({
       dauWau,
       modeDistribution,
       attemptsDistribution,
       flaggedWords,
       totalGameSessions: gameSessions.length,
+      totalWon,
+      overallWinRate,
+      avgAttempts,
+      totalUsers,
+      totalWords,
+      totalChapters,
+      pendingSuggestions,
     });
   } catch (error) {
     console.error("Error fetching real analytics:", error);
