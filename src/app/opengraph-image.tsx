@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
-export const alt = "Tekakonik — Game Tebak Kata Harian Komik Modern";
+export const alt = "Tekakomik — Game Tebak Kata Harian Komik Modern";
 export const size = {
   width: 1200,
   height: 630,
