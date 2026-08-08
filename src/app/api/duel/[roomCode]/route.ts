@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { auth } from "@/auth";
 
 export async function GET(request: Request, { params }: { params: Promise<{ roomCode: string }> }) {
   try {
@@ -93,11 +94,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ room
 
 export async function POST(request: Request, { params }: { params: Promise<{ roomCode: string }> }) {
   try {
+    const session = await auth();
+    const currentUserId = session?.user?.id;
+
     const { roomCode } = await params;
-    const { userId } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const userId = currentUserId || body.userId;
 
     if (!userId) {
-      return NextResponse.json({ error: "User ID wajib diisi" }, { status: 400 });
+      return NextResponse.json({ error: "Silakan login terlebih dahulu untuk bergabung ke room duel!" }, { status: 401 });
     }
 
     const duel = await db.duelChallenge.findUnique({
