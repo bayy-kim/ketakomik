@@ -13,7 +13,7 @@ export function LandingHeroCta() {
       <div className="flex flex-col items-center gap-3 w-full max-w-sm mt-1">
         <Link
           href="/play"
-          className="comic-btn text-lg sm:text-xl bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-3.5 flex items-center justify-center gap-2 animate-bounce shadow-md"
+          className="comic-btn text-lg sm:text-xl bg-comic-yellow hover:bg-yellow-400 text-comic-ink w-full py-3.5 flex items-center justify-center gap-2 animate-bounce comic-shadow-lg"
         >
           <Play className="w-6 h-6 fill-comic-ink text-comic-ink" />
           <span>PLAY! MAIN SEKARANG</span>

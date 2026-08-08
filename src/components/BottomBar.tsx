@@ -13,7 +13,7 @@ export function BottomBar() {
 
   const menuItems = [
     {
-      label: "MAIN",
+      label: isLoggedIn ? "PLAY!" : "MAIN",
       href: "/play",
       icon: Play,
       color: "bg-comic-yellow",
