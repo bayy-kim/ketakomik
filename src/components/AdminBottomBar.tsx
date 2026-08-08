@@ -31,7 +31,7 @@ export function AdminBottomBar() {
     },
     {
       label: "OFFLINE",
-      href: "/play-offline",
+      href: "/dashboardadmin/offline",
       icon: WifiOff,
       color: "bg-amber-100",
       iconColor: "text-amber-700",

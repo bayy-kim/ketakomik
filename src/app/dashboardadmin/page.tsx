@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Layers, BarChart3, MessageSquarePlus, Megaphone, Flag, Plus, Check, ShieldAlert } from "lucide-react";
+import { AdminStatCards } from "@/components/AdminStatCards";
 
 export default function AdminDashboardPage() {
   const [text, setText] = useState("");
@@ -64,9 +65,12 @@ export default function AdminDashboardPage() {
       <div className="bg-white comic-border p-5 rounded-xl comic-shadow">
         <h1 className="font-bangers text-3xl sm:text-4xl text-comic-ink">ADMIN DASHBOARD TEKAKOMIK</h1>
         <p className="text-xs sm:text-sm font-sans text-gray-700 mt-1">
-          Pintu masuk utama pengelola Tekakonik. Tambahkan soal tebakan secara cepat di bawah ini atau navigasi ke modul spesifik.
+          Pintu masuk utama pengelola Tekakomik. Tambahkan soal tebakan secara cepat di bawah ini atau navigasi ke modul spesifik.
         </p>
       </div>
+
+      {/* KPI STAT CARDS */}
+      <AdminStatCards />
 
       {/* QUICK ADD WORD FORM */}
       <div className="bg-white comic-border p-5 rounded-xl comic-shadow border-l-8 border-l-comic-klu">

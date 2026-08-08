@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldAlert, BookOpen, Layers, BarChart3, MessageSquarePlus, Megaphone, Flag, Home, Play } from "lucide-react";
+import { ShieldAlert, BookOpen, Layers, BarChart3, MessageSquarePlus, Megaphone, Flag, Home, Play, WifiOff } from "lucide-react";
 import { AdminBottomBar } from "@/components/AdminBottomBar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -32,6 +32,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className="flex items-center gap-2 px-3 py-2 rounded comic-border-sm hover:bg-yellow-100 text-comic-ink shadow-sm"
           >
             <Layers className="w-4 h-4 text-comic-bayangan" /> Kelola Chapter
+          </Link>
+          <Link
+            href="/dashboardadmin/offline"
+            className="flex items-center gap-2 px-3 py-2 rounded comic-border-sm hover:bg-yellow-100 text-comic-ink shadow-sm"
+          >
+            <WifiOff className="w-4 h-4 text-amber-700" /> Kelola Offline Pack
           </Link>
           <Link
             href="/dashboardadmin/analytics"

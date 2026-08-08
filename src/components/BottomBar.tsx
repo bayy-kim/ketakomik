@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 
 export function BottomBar() {
   const pathname = usePathname();
-  if (pathname.startsWith("/dashboardadmin")) return null;
+  if (pathname.startsWith("/dashboardadmin") || pathname === "/play-offline") return null;
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated";
 
