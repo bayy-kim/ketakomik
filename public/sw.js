@@ -34,6 +34,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  
+  // Abaikan request non-HTTP/HTTPS (seperti ekstensi chrome-extension://)
+  if (!event.request.url.startsWith("http:") && !event.request.url.startsWith("https:")) {
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)
