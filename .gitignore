@@ -41,3 +41,19 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Android Keystore & TWA artifacts (Security: Do NOT push to GitHub)
+*.keystore
+*.aab
+*.apk
+*.zip
+twa-manifest.json
+manifest-checksum.txt
+/app
+/gradle
+/gradlew*
+build.gradle
+settings.gradle
+gradle.properties
+store_icon.png
+
